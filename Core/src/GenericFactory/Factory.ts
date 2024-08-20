@@ -50,7 +50,7 @@ export class Factory<TConcrete extends IDisposable> implements IDisposable {
             if (Object.prototype.hasOwnProperty.call(this._instances, key)) {
                 try {
                     await this._instances[key].dispose();
-                } catch (_error) {
+                } catch {
                     // catch left empty on purpose, as we dispose on best effort
                 }
             }

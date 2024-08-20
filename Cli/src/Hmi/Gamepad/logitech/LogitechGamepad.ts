@@ -1,7 +1,5 @@
 import { Gamepad } from '../Shared/Gampepad';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const interpolate = require('everpolate').linear;
+import { linear as interpolate } from 'everpolate-ts';
 
 export interface JoyStickValue {
     x: number;
