@@ -7,8 +7,10 @@ export enum ESpecialFunctionType {
     macroToggle = 'macroToggle',
 }
 
-export const specialFunctionDefinitionConfigurationSchema = z.object({
-    type: z.nativeEnum(ESpecialFunctionType),
-});
+export const specialFunctionDefinitionConfigurationSchema = z
+    .object({
+        type: z.nativeEnum(ESpecialFunctionType),
+    })
+    .passthrough();
 
 export type ISpecialFunctionDefinition = z.infer<typeof specialFunctionDefinitionConfigurationSchema>;

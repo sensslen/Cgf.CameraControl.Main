@@ -40,12 +40,12 @@ export abstract class Gamepad implements IHmi {
     ) {
         this.mixer = mixerFactory.get(config.videoMixer);
 
-        config.cameraMap.forEach((value: number, key: number) => {
+        for (const [key, value] of Object.entries(config.cameraMap)) {
             const camera = cameraConnectionFactory.get(value);
             if (camera !== undefined) {
-                this.cameras[key] = camera;
+                this.cameras[Number(key)] = camera;
             }
-        });
+        }
 
         this.connectionChange = config.connectionChange;
 
@@ -81,16 +81,16 @@ export abstract class Gamepad implements IHmi {
     }
 
     protected changeConnection(direction: EButtonDirection): void {
-        let nextInput = this.connectionChange.default.get(direction);
+        let nextInput = this.connectionChange.default[direction];
         switch (this.altKeyState) {
             case EAltKey.alt:
                 if (this.connectionChange.alt) {
-                    nextInput = this.connectionChange.alt.get(direction);
+                    nextInput = this.connectionChange.alt[direction];
                 }
                 break;
             case EAltKey.altLower:
                 if (this.connectionChange.altLower) {
-                    nextInput = this.connectionChange.altLower.get(direction);
+                    nextInput = this.connectionChange.altLower[direction];
                 }
                 break;
             default:
@@ -227,14 +227,14 @@ export abstract class Gamepad implements IHmi {
     }
 
     private parseSpecialFunctionConfig(
-        config: Map<EButtonDirection, ISpecialFunctionDefinition>,
+        config: Partial<Record<EButtonDirection, ISpecialFunctionDefinition>>,
         run: (key: EButtonDirection, config: ISpecialFunctionDefinition) => void
     ) {
-        config.forEach((value, key) => {
+        for (const [key, value] of Object.entries(config) as [EButtonDirection, ISpecialFunctionDefinition][]) {
             if (value !== undefined) {
                 run(key, value);
             }
-        });
+        }
     }
 
     abstract dispose(): Promise<void>;

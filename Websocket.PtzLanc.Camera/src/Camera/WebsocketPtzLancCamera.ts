@@ -2,11 +2,12 @@ import { BehaviorSubject, Observable, Subscription, combineLatest } from 'rxjs';
 import { ICameraConnection } from 'cgf.cameracontrol.main.core';
 import { ILogger } from 'cgf.cameracontrol.main.core';
 import { IWebsocketPtzLancCameraConfiguration } from './IWebsocketPtzLancCameraConfiguration';
-import { WebSocket } from 'partysocket';
+import ReconnectingWebSocket from 'reconnecting-websocket';
+import WS from 'ws';
 import { WebsocketPtzLancCameraSpeedState } from './WebsocketPtzLancCameraState';
 
 export class WebsocketPtzLancCamera implements ICameraConnection {
-    private _websocket: WebSocket;
+    private _websocket: ReconnectingWebSocket;
     private readonly stateSubject = new BehaviorSubject<WebsocketPtzLancCameraSpeedState>(
         new WebsocketPtzLancCameraSpeedState()
     );
@@ -18,7 +19,11 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
         private logger: ILogger
     ) {
         const connectionId = `ws://${this.config.ip}/ws`;
-        this._websocket = new WebSocket(connectionId);
+        this._websocket = new ReconnectingWebSocket(connectionId, [], {
+            /* eslint-disable @typescript-eslint/naming-convention */
+            WebSocket: WS,
+            /* eslint-enable @typescript-eslint/naming-convention */
+        });
 
         this._websocket.onopen = (_) => {
             this.log(`websocket connected: ${connectionId}`);
