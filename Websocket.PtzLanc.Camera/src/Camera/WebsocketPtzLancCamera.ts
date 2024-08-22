@@ -17,7 +17,7 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
         private config: IWebsocketPtzLancCameraConfiguration,
         private logger: ILogger
     ) {
-        const connectionId = `ws://${this.config.connectionUrl}:${this.config.connectionPort}`;
+        const connectionId = `ws://${this.config.ip}/ws`;
         this._websocket = new WebSocket(connectionId);
 
         this._websocket.onopen = (_) => {
@@ -46,7 +46,7 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     }
 
     public get connectionString(): string {
-        return this.config.connectionUrl;
+        return this._websocket.url;
     }
 
     public get whenConnectedChanged(): Observable<boolean> {
@@ -107,11 +107,11 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     }
 
     private log(toLog: string) {
-        this.logger.log(`CgfPtzCamera(${this.config.connectionUrl}):${toLog}`);
+        this.logger.log(`WebsocketCamera(${this.config.ip}):${toLog}`);
     }
 
     private logError(toLog: string) {
-        this.logger.error(`CgfPtzCamera(${this.config.connectionUrl}):${toLog}`);
+        this.logger.error(`WebsocketCamera(${this.config.ip}):${toLog}`);
     }
     private multiplyRoundAndCrop(value: number, maximumAbsolute: number): number {
         const maximized = Math.max(-maximumAbsolute, Math.min(maximumAbsolute, value));
