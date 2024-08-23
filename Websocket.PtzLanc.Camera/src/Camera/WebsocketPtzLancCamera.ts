@@ -1,18 +1,16 @@
-import { BehaviorSubject, Observable, Subscription, combineLatest } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { WebsocketPtzLancCameraSpeedState, speedCameraStateSchema } from './WebsocketPtzLancCameraState';
 import { ICameraConnection } from 'cgf.cameracontrol.main.core';
 import { ILogger } from 'cgf.cameracontrol.main.core';
 import { IWebsocketPtzLancCameraConfiguration } from './IWebsocketPtzLancCameraConfiguration';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import WS from 'ws';
-import { WebsocketPtzLancCameraSpeedState } from './WebsocketPtzLancCameraState';
 
 export class WebsocketPtzLancCamera implements ICameraConnection {
     private _websocket: ReconnectingWebSocket;
-    private readonly stateSubject = new BehaviorSubject<WebsocketPtzLancCameraSpeedState>(
-        new WebsocketPtzLancCameraSpeedState()
-    );
-    private readonly connectionSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    private readonly transmitSubscription: Subscription;
+    private _requestState = speedCameraStateSchema.parse({});
+    private _canSend = false;
+    private readonly connectionSubject = new BehaviorSubject<boolean>(false);
 
     constructor(
         private config: IWebsocketPtzLancCameraConfiguration,
@@ -41,13 +39,15 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
             this.connectionSubject.next(false);
         };
 
-        this.transmitSubscription = combineLatest([this.connectionSubject, this.stateSubject]).subscribe(
-            ([isConnected, state]) => {
-                if (isConnected) {
-                    this._websocket.send(JSON.stringify(state));
-                }
+        this._websocket.onmessage = (message) => {
+            this.log(`received message: ${message.data}`);
+            const parseResult = speedCameraStateSchema.safeParse(message.data);
+            if (parseResult.success !== false && !this.equals(this._requestState, parseResult.data)) {
+                this.send();
+            } else {
+                this._canSend = true;
             }
-        );
+        };
     }
 
     public get connectionString(): string {
@@ -60,7 +60,6 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
 
     public async dispose(): Promise<void> {
         try {
-            this.transmitSubscription.unsubscribe();
             this._websocket.close();
         } catch (error) {
             this.logError(`unable to stop socket connection - ${error}`);
@@ -81,7 +80,7 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     }
     public zoom(value: number): void {
         this.setState((state) => {
-            state.zoom = this.multiplyRoundAndCrop(value * 8, 8);
+            state.zoom = this.multiplyRoundAndCrop(value * 255, 255);
             return state;
         });
     }
@@ -107,8 +106,10 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     }
 
     private setState(change: (state: WebsocketPtzLancCameraSpeedState) => WebsocketPtzLancCameraSpeedState): void {
-        const newState = change(this.stateSubject.value);
-        this.stateSubject.next(newState);
+        this._requestState = change(this._requestState);
+        if (this._canSend) {
+            this.send();
+        }
     }
 
     private log(toLog: string) {
@@ -127,5 +128,21 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
             return -value;
         }
         return value;
+    }
+
+    private equals(value1: WebsocketPtzLancCameraSpeedState, value2: WebsocketPtzLancCameraSpeedState): boolean {
+        return (
+            value1.pan === value2.pan &&
+            value1.tilt === value2.tilt &&
+            value1.zoom === value2.zoom &&
+            value1.red === value2.red &&
+            value1.green === value2.green
+        );
+    }
+
+    private send() {
+        this.log(`sending state: ${JSON.stringify(this._requestState)}`);
+        this._canSend = false;
+        this._websocket.send(JSON.stringify(this._requestState));
     }
 }

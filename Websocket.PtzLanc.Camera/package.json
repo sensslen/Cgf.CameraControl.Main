@@ -38,7 +38,7 @@
         "clean": "shx rm -rf dist",
         "postinstall": "npm run sort",
         "lint": "eslint --ext .ts .",
-        "lint-fix": "eslint --ext .ts --fix .",
+        "lint-fix": "eslint --ext .ts --fix src",
         "presetuppublish": "npm run sort && npm run build",
         "setuppublish": "node dist/SetupPackage.js",
         "sort": "sort-package-json package.json"
