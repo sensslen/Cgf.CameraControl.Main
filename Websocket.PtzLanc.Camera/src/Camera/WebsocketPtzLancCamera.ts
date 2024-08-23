@@ -40,7 +40,6 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
         };
 
         this._websocket.onmessage = (message) => {
-            this.log(`received message: ${message.data}`);
             const parseResult = speedCameraStateSchema.safeParse(message.data);
             if (parseResult.success !== false && !this.equals(this._requestState, parseResult.data)) {
                 this.send();
@@ -141,7 +140,6 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     }
 
     private send() {
-        this.log(`sending state: ${JSON.stringify(this._requestState)}`);
         this._canSend = false;
         this._websocket.send(JSON.stringify(this._requestState));
     }
