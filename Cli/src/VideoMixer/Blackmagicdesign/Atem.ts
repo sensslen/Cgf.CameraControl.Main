@@ -56,7 +56,11 @@ export class Atem implements IVideoMixer {
     }
 
     public startup(): Promise<void> {
-        return this.connection.startup();
+        return this.connection.startup().then((_) => {
+            if (this.connection.atem.state !== undefined) {
+                this.stateChange(this.connection.atem.state);
+            }
+        });
     }
 
     public imageSelectionChangeGet(): StrictEventEmitter<EventEmitter, IImageSelectionChange> {
@@ -113,9 +117,10 @@ export class Atem implements IVideoMixer {
     private updateActiveInputs(state: MixEffect) {
         const onAirInputs = this.connection.atem.listVisibleInputs('program', this.config.mixEffectBlock);
         const newPreviewIsOnAir = onAirInputs.some((input) => input === state.previewInput);
+        console.log(`new preview input:${state.previewInput}`);
 
         if (
-            this._currentSelectionState.previewInput !== state.previewInput &&
+            this._currentSelectionState.previewInput !== state.previewInput ||
             this._currentSelectionState.previewOnAir !== newPreviewIsOnAir
         ) {
             this._selectedChangeEmitter.emit('previewChange', state.previewInput, newPreviewIsOnAir);
