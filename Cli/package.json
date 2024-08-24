@@ -22,8 +22,8 @@
         "build": "npm run clean && npm run lint && tsc",
         "clean": "shx rm -rf dist",
         "postinstall": "sort-package-json",
-        "lint": "eslint --ext .ts src",
-        "lint-fix": "eslint --ext .ts --fix .",
+        "lint": "eslint src",
+        "lint-fix": "eslint --fix src",
         "prestart": "npm run build && shx cp src/config.json dist",
         "start": "node dist/index.js"
     },
