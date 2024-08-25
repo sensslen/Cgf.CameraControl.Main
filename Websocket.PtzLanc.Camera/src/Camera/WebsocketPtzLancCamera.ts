@@ -3,11 +3,11 @@ import { WebsocketPtzLancCameraSpeedState, speedCameraStateSchema } from './Webs
 import { ICameraConnection } from 'cgf.cameracontrol.main.core';
 import { ILogger } from 'cgf.cameracontrol.main.core';
 import { IWebsocketPtzLancCameraConfiguration } from './IWebsocketPtzLancCameraConfiguration';
-import ReconnectingWebSocket from 'reconnecting-websocket';
 import WS from 'ws';
+import { WebSocket } from 'partysocket';
 
 export class WebsocketPtzLancCamera implements ICameraConnection {
-    private _websocket: ReconnectingWebSocket;
+    private _websocket: WebSocket;
     private _requestState = speedCameraStateSchema.parse({});
     private _canSend = false;
     private readonly connectionSubject = new BehaviorSubject<boolean>(false);
@@ -17,7 +17,7 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
         private logger: ILogger
     ) {
         const connectionId = `ws://${this.config.ip}/ws`;
-        this._websocket = new ReconnectingWebSocket(connectionId, [], {
+        this._websocket = new WebSocket(connectionId, [], {
             /* eslint-disable @typescript-eslint/naming-convention */
             WebSocket: WS,
             /* eslint-enable @typescript-eslint/naming-convention */
@@ -83,7 +83,7 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
             return state;
         });
     }
-    public focus(_: number): void {}
+    public focus(_: number): void { }
     public tallyState(tallyState: 'off' | 'preview' | 'program'): void {
         this.setState((state) => {
             switch (tallyState) {

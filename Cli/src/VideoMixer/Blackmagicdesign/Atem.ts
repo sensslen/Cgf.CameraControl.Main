@@ -117,7 +117,6 @@ export class Atem implements IVideoMixer {
     private updateActiveInputs(state: MixEffect) {
         const onAirInputs = this.connection.atem.listVisibleInputs('program', this.config.mixEffectBlock);
         const newPreviewIsOnAir = onAirInputs.some((input) => input === state.previewInput);
-        console.log(`new preview input:${state.previewInput}`);
 
         if (
             this._currentSelectionState.previewInput !== state.previewInput ||
