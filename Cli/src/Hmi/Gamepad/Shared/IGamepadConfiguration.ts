@@ -32,6 +32,7 @@ export const gamepadConfigurationSchema = configSchema
          * the camera index in the configuration
          */
         cameraMap: z.record(z.coerce.number().int().positive(), z.number().int().positive()),
+        enableChangingProgram: z.boolean().default(true),
     })
     .passthrough();
 

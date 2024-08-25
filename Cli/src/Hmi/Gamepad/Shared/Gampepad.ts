@@ -26,6 +26,7 @@ export abstract class Gamepad implements IHmi {
     private selectedPreviewCamera?: ICameraConnection;
     private selectedOnAirCamera?: ICameraConnection;
     private readonly connectionChange: IConnectionChangeConfiguration;
+    private readonly enableChangingProgram: boolean;
 
     private readonly specialFunctionDefault: { [key in EButtonDirection]?: ISpecialFunction } = {};
     private readonly specialFunctionAlt: { [key in EButtonDirection]?: ISpecialFunction } = {};
@@ -48,6 +49,7 @@ export abstract class Gamepad implements IHmi {
         }
 
         this.connectionChange = config.connectionChange;
+        this.enableChangingProgram = config.enableChangingProgram;
 
         this.parseSpecialFunctionConfig(config.specialFunction.default, (key, config) => {
             this.specialFunctionDefault[key] = SpecialFunctionFactory.get(config);
@@ -149,11 +151,15 @@ export abstract class Gamepad implements IHmi {
     }
 
     protected cut(): void {
-        this.mixer?.cut();
+        if (this.enableChangingProgram) {
+            this.mixer?.cut();
+        }
     }
 
     protected auto(): void {
-        this.mixer?.auto();
+        if (this.enableChangingProgram) {
+            this.mixer?.auto();
+        }
     }
 
     protected altKey(press: boolean): void {
