@@ -13,11 +13,11 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     private readonly connectionSubject = new BehaviorSubject<boolean>(false);
 
     constructor(
-        private config: IWebsocketPtzLancCameraConfiguration,
-        private logger: ILogger
+        private readonly config: IWebsocketPtzLancCameraConfiguration,
+        private readonly logger: ILogger
     ) {
         const connectionId = `ws://${this.config.ip}/ws`;
-        this._websocket = new WebSocket(connectionId, [], {
+        this._websocket = new WebSocket(connectionId, null, {
             /* eslint-disable @typescript-eslint/naming-convention */
             WebSocket: WS,
             /* eslint-enable @typescript-eslint/naming-convention */
@@ -83,25 +83,27 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
             return state;
         });
     }
-    public focus(_: number): void { }
+    public focus(_: number): void {}
     public tallyState(tallyState: 'off' | 'preview' | 'program'): void {
-        this.setState((state) => {
-            switch (tallyState) {
-                case 'off':
-                    state.green = 0;
-                    state.red = 0;
-                    break;
-                case 'preview':
-                    state.green = 255;
-                    state.red = 0;
-                    break;
-                case 'program':
-                    state.green = 0;
-                    state.red = 255;
-                    break;
-            }
-            return state;
-        });
+        if (this.config.showTallyLight) {
+            this.setState((state) => {
+                switch (tallyState) {
+                    case 'off':
+                        state.green = 0;
+                        state.red = 0;
+                        break;
+                    case 'preview':
+                        state.green = 255;
+                        state.red = 0;
+                        break;
+                    case 'program':
+                        state.green = 0;
+                        state.red = 255;
+                        break;
+                }
+                return state;
+            });
+        }
     }
 
     private setState(change: (state: WebsocketPtzLancCameraSpeedState) => WebsocketPtzLancCameraSpeedState): void {
@@ -130,13 +132,12 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     }
 
     private equals(value1: WebsocketPtzLancCameraSpeedState, value2: WebsocketPtzLancCameraSpeedState): boolean {
-        return (
-            value1.pan === value2.pan &&
-            value1.tilt === value2.tilt &&
-            value1.zoom === value2.zoom &&
-            value1.red === value2.red &&
-            value1.green === value2.green
-        );
+        const equal = value1.pan === value2.pan && value1.tilt === value2.tilt && value1.zoom === value2.zoom;
+
+        if (this.config.showTallyLight) {
+            return equal && value1.red === value2.red && value1.green === value2.green;
+        }
+        return equal;
     }
 
     private send() {

@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const atemConfigurationSchema = configSchema
     .extend({
         ip: z.string(),
-        mixEffectBlock: z.number().int().positive(),
+        mixEffectBlock: z.number().int().nonnegative(),
     })
     .passthrough();
 

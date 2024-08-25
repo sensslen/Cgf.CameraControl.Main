@@ -4,7 +4,8 @@ import { z } from 'zod';
 export const websocketPtzLancCameraConfigurationSchema = configSchema
     .extend({
         ip: z.string(),
-        panTiltInvert: z.boolean().optional(),
+        panTiltInvert: z.boolean().default(false).optional(),
+        showTallyLight: z.boolean().default(true).optional(),
     })
     .passthrough();
 
