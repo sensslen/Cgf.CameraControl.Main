@@ -8,7 +8,7 @@ import { IRumblepad2Config } from './IRumblepad2Config';
 import { LogitechGamepad } from '../LogitechGamepad';
 
 export class Rumblepad2 extends LogitechGamepad {
-    private readonly pad: NodeGamepad;
+    private readonly _pad: NodeGamepad;
 
     constructor(
         config: IRumblepad2Config,
@@ -26,77 +26,77 @@ export class Rumblepad2 extends LogitechGamepad {
             info: (tolog: string) => this.log(tolog),
         };
 
-        this.pad = new NodeGamepad(padConfig, gamepadLogger);
+        this._pad = new NodeGamepad(padConfig, gamepadLogger);
 
-        this.pad.on('left:move', (value) => {
+        this._pad.on('left:move', (value) => {
             this.leftJoystickMove(value);
         });
 
-        this.pad.on('right:move', (value) => {
+        this._pad.on('right:move', (value) => {
             this.rightJoystickMove(value);
         });
 
-        this.pad.on('dpadLeft:press', () => {
+        this._pad.on('dpadLeft:press', () => {
             this.changeConnection(EButtonDirection.left);
         });
 
-        this.pad.on('dpadUp:press', () => {
+        this._pad.on('dpadUp:press', () => {
             this.changeConnection(EButtonDirection.up);
         });
 
-        this.pad.on('dpadRight:press', () => {
+        this._pad.on('dpadRight:press', () => {
             this.changeConnection(EButtonDirection.right);
         });
 
-        this.pad.on('dpadDown:press', () => {
+        this._pad.on('dpadDown:press', () => {
             this.changeConnection(EButtonDirection.down);
         });
 
-        this.pad.on('r1:press', () => {
+        this._pad.on('r1:press', () => {
             this.cut();
         });
 
-        this.pad.on('r2:press', () => {
+        this._pad.on('r2:press', () => {
             this.auto();
         });
 
-        this.pad.on('l1:press', () => {
+        this._pad.on('l1:press', () => {
             this.altKey(true);
         });
 
-        this.pad.on('l1:release', () => {
+        this._pad.on('l1:release', () => {
             this.altKey(false);
         });
 
-        this.pad.on('l2:press', () => {
+        this._pad.on('l2:press', () => {
             this.altLowerKey(true);
         });
 
-        this.pad.on('l2:release', () => {
+        this._pad.on('l2:release', () => {
             this.altLowerKey(false);
         });
 
-        this.pad.on('1:press', () => {
+        this._pad.on('1:press', () => {
             this.specialFunction(EButtonDirection.left);
         });
 
-        this.pad.on('2:press', () => {
+        this._pad.on('2:press', () => {
             this.specialFunction(EButtonDirection.down);
         });
 
-        this.pad.on('3:press', () => {
+        this._pad.on('3:press', () => {
             this.specialFunction(EButtonDirection.right);
         });
 
-        this.pad.on('4:press', () => {
+        this._pad.on('4:press', () => {
             this.specialFunction(EButtonDirection.up);
         });
 
-        this.pad.start();
+        this._pad.start();
     }
 
     dispose(): Promise<void> {
-        this.pad.stop();
+        this._pad.stop();
         return Promise.resolve();
     }
 }

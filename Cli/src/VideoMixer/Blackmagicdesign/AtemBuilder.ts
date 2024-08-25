@@ -5,9 +5,9 @@ import { atemConfigurationSchema } from './IAtemConfig';
 import { fromZodError } from 'zod-validation-error';
 
 export class AtemBuilder implements IBuilder<IVideoMixer> {
-    private readonly atemFactory;
+    private readonly _atemFactory;
     constructor(logger: ILogger) {
-        this.atemFactory = new AtemFactory(logger);
+        this._atemFactory = new AtemFactory(logger);
     }
     public supportedTypes(): Promise<string[]> {
         return Promise.resolve(['blackmagicdesign/atem']);
@@ -19,7 +19,7 @@ export class AtemBuilder implements IBuilder<IVideoMixer> {
             return Promise.reject(fromZodError(parseResult.error));
         }
 
-        const atem = new Atem(parseResult.data, this.atemFactory);
+        const atem = new Atem(parseResult.data, this._atemFactory);
         await atem.startup();
         return atem;
     }

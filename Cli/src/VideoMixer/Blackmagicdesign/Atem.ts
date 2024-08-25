@@ -9,7 +9,7 @@ import { MixEffect } from 'atem-connection/dist/state/video';
 import { StrictEventEmitter } from 'strict-event-emitter-types';
 
 export class Atem implements IVideoMixer {
-    private readonly connection: IAtemConnection;
+    private readonly _connection: IAtemConnection;
     private readonly _selectedChangeEmitter = new EventEmitter() as StrictEventEmitter<
         EventEmitter,
         IImageSelectionChange
@@ -25,9 +25,9 @@ export class Atem implements IVideoMixer {
         private config: IAtemConfiguration,
         private atemFactory: AtemFactory
     ) {
-        this.connection = atemFactory.get(config.ip);
+        this._connection = atemFactory.get(config.ip);
 
-        this.connection.atem.on('stateChanged', (state, _pathToChange) => {
+        this._connection.atem.on('stateChanged', (state, _pathToChange) => {
             this.stateChange(state);
         });
     }
@@ -56,9 +56,9 @@ export class Atem implements IVideoMixer {
     }
 
     public startup(): Promise<void> {
-        return this.connection.startup().then((_) => {
-            if (this.connection.atem.state !== undefined) {
-                this.stateChange(this.connection.atem.state);
+        return this._connection.startup().then((_) => {
+            if (this._connection.atem.state !== undefined) {
+                this.stateChange(this._connection.atem.state);
             }
         });
     }
@@ -68,38 +68,38 @@ export class Atem implements IVideoMixer {
     }
 
     public cut(): void {
-        if (this.connection.connected) {
-            this.connection.atem.cut(this.config.mixEffectBlock);
+        if (this._connection.connected) {
+            this._connection.atem.cut(this.config.mixEffectBlock);
         }
     }
 
     public auto(): void {
-        if (this.connection.connected) {
-            this.connection.atem.autoTransition(this.config.mixEffectBlock);
+        if (this._connection.connected) {
+            this._connection.atem.autoTransition(this.config.mixEffectBlock);
         }
     }
 
     public changeInput(newInput: number): void {
-        if (this.connection.connected) {
-            this.connection.atem.changePreviewInput(newInput, this.config.mixEffectBlock);
+        if (this._connection.connected) {
+            this._connection.atem.changePreviewInput(newInput, this.config.mixEffectBlock);
         }
     }
 
     public toggleKey(key: number): void {
-        if (this.connection.connected && this.connection.atem.state !== undefined) {
-            const meState = this.connection.atem.state.video.mixEffects[this.config.mixEffectBlock];
+        if (this._connection.connected && this._connection.atem.state !== undefined) {
+            const meState = this._connection.atem.state.video.mixEffects[this.config.mixEffectBlock];
             if (meState !== undefined) {
                 const keyState = meState.upstreamKeyers[key];
                 if (keyState !== undefined) {
-                    this.connection.atem.setUpstreamKeyerOnAir(!keyState.onAir, key);
+                    this._connection.atem.setUpstreamKeyerOnAir(!keyState.onAir, key);
                 }
             }
         }
     }
 
     public runMacro(macro: number): void {
-        if (this.connection.connected) {
-            this.connection.atem.macroRun(macro);
+        if (this._connection.connected) {
+            this._connection.atem.macroRun(macro);
         }
     }
 
@@ -115,7 +115,7 @@ export class Atem implements IVideoMixer {
     }
 
     private updateActiveInputs(state: MixEffect) {
-        const onAirInputs = this.connection.atem.listVisibleInputs('program', this.config.mixEffectBlock);
+        const onAirInputs = this._connection.atem.listVisibleInputs('program', this.config.mixEffectBlock);
         const newPreviewIsOnAir = onAirInputs.some((input) => input === state.previewInput);
 
         if (
@@ -150,13 +150,13 @@ export class Atem implements IVideoMixer {
 
     private getCurrentSwitcherState(): Promise<AtemState> {
         return new Promise((resolve, reject) => {
-            if (this.connection.connected === undefined) {
+            if (this._connection.connected === undefined) {
                 reject('no connection');
             }
-            if (this.connection.atem.state !== undefined) {
-                resolve(this.connection.atem.state);
+            if (this._connection.atem.state !== undefined) {
+                resolve(this._connection.atem.state);
             } else {
-                this.connection.atem.once('stateChanged', (state, _pathToChange) => {
+                this._connection.atem.once('stateChanged', (state, _pathToChange) => {
                     resolve(state);
                 });
             }

@@ -12,7 +12,7 @@ export interface IAtemConnection {
 
 class AtemConnection implements IAtemConnection {
     readonly atem: Atem;
-    private startupResult: Promise<void> | undefined = undefined;
+    private _startupResult: Promise<void> | undefined = undefined;
     private _connectionSubject = new BehaviorSubject<boolean>(false);
 
     constructor(
@@ -41,10 +41,10 @@ class AtemConnection implements IAtemConnection {
     }
 
     async startup(): Promise<void> {
-        if (this.startupResult === undefined) {
-            this.startupResult = this.atem.connect(this.ip);
+        if (this._startupResult === undefined) {
+            this._startupResult = this.atem.connect(this.ip);
         }
-        return this.startupResult;
+        return this._startupResult;
     }
 
     private error(e: string) {
@@ -56,29 +56,29 @@ class AtemConnection implements IAtemConnection {
 }
 
 export class AtemFactory {
-    private connections = new Map<string, { connection: AtemConnection; usages: number }>();
+    private _connections = new Map<string, { connection: AtemConnection; usages: number }>();
 
-    constructor(private logger: ILogger) {}
+    constructor(private readonly _logger: ILogger) {}
 
     get(ip: string): IAtemConnection {
-        const requestedConnection = this.connections.get(ip);
+        const requestedConnection = this._connections.get(ip);
         if (requestedConnection !== undefined) {
             requestedConnection.usages++;
             return requestedConnection.connection;
         }
 
-        const retval = new AtemConnection(ip, this.logger);
-        this.connections.set(ip, { connection: retval, usages: 1 });
+        const retval = new AtemConnection(ip, this._logger);
+        this._connections.set(ip, { connection: retval, usages: 1 });
         return retval;
     }
 
     release(ip: string): Promise<void> {
-        const requestedConnection = this.connections.get(ip);
+        const requestedConnection = this._connections.get(ip);
         if (requestedConnection !== undefined) {
             requestedConnection.usages--;
             if (requestedConnection.usages <= 0) {
                 const retval = requestedConnection.connection.atem.disconnect();
-                this.connections.delete(ip);
+                this._connections.delete(ip);
                 return retval;
             }
         }

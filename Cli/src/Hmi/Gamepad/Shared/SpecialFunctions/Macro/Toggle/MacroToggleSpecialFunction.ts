@@ -5,16 +5,16 @@ import { ISpecialFunctionMacroToggleConfiguration } from './ISpecialFunctionMacr
 import { MacroToggleSpecialFunctionConditionFactory } from './MacroToggleSpecialFunctionConditionFactory';
 
 export class MacroToggleSpecialFunction implements ISpecialFunction {
-    private condition?: IMacroToggleSpecialFunctionCondition;
+    private _condition?: IMacroToggleSpecialFunctionCondition;
     constructor(
-        private config: ISpecialFunctionMacroToggleConfiguration,
+        private readonly _config: ISpecialFunctionMacroToggleConfiguration,
         logger: ILogger
     ) {
-        this.condition = MacroToggleSpecialFunctionConditionFactory.get(this.config.condition, logger);
+        this._condition = MacroToggleSpecialFunctionConditionFactory.get(this._config.condition, logger);
     }
 
     run(mixer: IVideoMixer): void {
-        this.condition
+        this._condition
             ?.isActive(mixer)
             .then((isActive) => this.runMacro(isActive, mixer))
             .catch((_error) => {
@@ -23,7 +23,7 @@ export class MacroToggleSpecialFunction implements ISpecialFunction {
     }
 
     private runMacro(isActive: boolean, mixer: IVideoMixer) {
-        const index = isActive ? this.config.indexOff : this.config.indexOn;
+        const index = isActive ? this._config.indexOff : this._config.indexOn;
         mixer.runMacro(index);
     }
 }

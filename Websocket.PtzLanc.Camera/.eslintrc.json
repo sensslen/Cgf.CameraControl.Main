@@ -59,7 +59,30 @@
       }
     ],
     "@typescript-eslint/naming-convention": [
-      "error"
+      "error",
+      {
+        "selector": [
+          "property",
+          "accessor"
+        ],
+        "format": [
+          "camelCase"
+        ],
+        "leadingUnderscore": "forbid"
+      },
+      {
+        "selector": [
+          "property",
+          "accessor"
+        ],
+        "modifiers": [
+          "private"
+        ],
+        "format": [
+          "camelCase"
+        ],
+        "leadingUnderscore": "require"
+      }
     ]
   }
 }

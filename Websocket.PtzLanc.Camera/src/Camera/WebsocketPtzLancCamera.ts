@@ -10,7 +10,7 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     private _websocket: WebSocket;
     private _requestState = speedCameraStateSchema.parse({});
     private _canSend = false;
-    private readonly connectionSubject = new BehaviorSubject<boolean>(false);
+    private readonly _connectionSubject = new BehaviorSubject<boolean>(false);
 
     constructor(
         private readonly config: IWebsocketPtzLancCameraConfiguration,
@@ -25,7 +25,7 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
 
         this._websocket.onopen = (_) => {
             this.log(`websocket connected: ${connectionId}`);
-            this.connectionSubject.next(true);
+            this._connectionSubject.next(true);
         };
 
         this._websocket.onerror = (errorevent) => {
@@ -36,7 +36,7 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
             this.log(
                 `websocket closed - trying automatic reconnect: ${connectionId}\n${closeevent.code}-${closeevent.reason}`
             );
-            this.connectionSubject.next(false);
+            this._connectionSubject.next(false);
         };
 
         this._websocket.onmessage = (message) => {
@@ -54,7 +54,7 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     }
 
     public get whenConnectedChanged(): Observable<boolean> {
-        return this.connectionSubject;
+        return this._connectionSubject;
     }
 
     public async dispose(): Promise<void> {

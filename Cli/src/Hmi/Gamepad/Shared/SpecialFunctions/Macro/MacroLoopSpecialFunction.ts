@@ -3,14 +3,14 @@ import { ISpecialFunctionMacroLoopConfig } from './ISpecialFunctionMacroLoopConf
 import { IVideoMixer } from 'cgf.cameracontrol.main.core';
 
 export class MacroLoopSpecialFunction implements ISpecialFunction {
-    private nextIndex = 0;
-    constructor(private config: ISpecialFunctionMacroLoopConfig) {}
+    private _nextIndex = 0;
+    constructor(private readonly _config: ISpecialFunctionMacroLoopConfig) {}
 
     run(mixer: IVideoMixer): void {
-        mixer.runMacro(this.config.indexes[this.nextIndex]);
-        this.nextIndex++;
-        if (this.nextIndex >= this.config.indexes.length) {
-            this.nextIndex = 0;
+        mixer.runMacro(this._config.indexes[this._nextIndex]);
+        this._nextIndex++;
+        if (this._nextIndex >= this._config.indexes.length) {
+            this._nextIndex = 0;
         }
     }
 }

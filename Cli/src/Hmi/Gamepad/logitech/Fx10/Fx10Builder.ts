@@ -9,8 +9,8 @@ import { fromZodError } from 'zod-validation-error';
 import { logitechFx10ConfigurationShema } from './ILogitechFx10Config';
 
 export class Fx10Builder implements IBuilder<IHmi> {
-    private readonly f310Name = 'logitech/F310';
-    private readonly f710Name = 'logitech/F710';
+    private readonly _f310Name = 'logitech/F310';
+    private readonly _f710Name = 'logitech/F710';
 
     constructor(
         private logger: ILogger,
@@ -18,7 +18,7 @@ export class Fx10Builder implements IBuilder<IHmi> {
         private cameraFactory: CameraConnectionFactory
     ) {}
     public supportedTypes(): Promise<string[]> {
-        return Promise.resolve([this.f310Name, this.f710Name]);
+        return Promise.resolve([this._f310Name, this._f710Name]);
     }
 
     public build(config: IConfig): Promise<IHmi> {
@@ -28,11 +28,11 @@ export class Fx10Builder implements IBuilder<IHmi> {
         }
 
         switch (config.type) {
-            case this.f310Name:
+            case this._f310Name:
                 return Promise.resolve(
                     new Fx10(parseResult.data, this.logger, this.mixerFactory, this.cameraFactory, f310Config)
                 );
-            case this.f710Name:
+            case this._f710Name:
                 return Promise.resolve(
                     new Fx10(parseResult.data, this.logger, this.mixerFactory, this.cameraFactory, f710Config)
                 );

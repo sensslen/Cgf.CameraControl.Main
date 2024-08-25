@@ -20,17 +20,17 @@ enum EAltKey {
 }
 
 export abstract class Gamepad implements IHmi {
-    private altKeyState = EAltKey.none;
-    private readonly mixer?: IVideoMixer;
-    private readonly cameras: { [key: number]: ICameraConnection } = {};
-    private selectedPreviewCamera?: ICameraConnection;
-    private selectedOnAirCamera?: ICameraConnection;
-    private readonly connectionChange: IConnectionChangeConfiguration;
-    private readonly enableChangingProgram: boolean;
+    private _altKeyState = EAltKey.none;
+    private readonly _mixer?: IVideoMixer;
+    private readonly _cameras: { [key: number]: ICameraConnection } = {};
+    private _selectedPreviewCamera?: ICameraConnection;
+    private _selectedOnAirCamera?: ICameraConnection;
+    private readonly _connectionChange: IConnectionChangeConfiguration;
+    private readonly _enableChangingProgram: boolean;
 
-    private readonly specialFunctionDefault: { [key in EButtonDirection]?: ISpecialFunction } = {};
-    private readonly specialFunctionAlt: { [key in EButtonDirection]?: ISpecialFunction } = {};
-    private readonly specialFunctionAltLower: { [key in EButtonDirection]?: ISpecialFunction } = {};
+    private readonly _specialFunctionDefault: { [key in EButtonDirection]?: ISpecialFunction } = {};
+    private readonly _specialFunctionAlt: { [key in EButtonDirection]?: ISpecialFunction } = {};
+    private readonly _specialFunctionAltLower: { [key in EButtonDirection]?: ISpecialFunction } = {};
     private readonly _connectionSubject = new BehaviorSubject<boolean>(false);
 
     constructor(
@@ -39,35 +39,35 @@ export abstract class Gamepad implements IHmi {
         mixerFactory: VideomixerFactory,
         cameraConnectionFactory: CameraConnectionFactory
     ) {
-        this.mixer = mixerFactory.get(config.videoMixer);
+        this._mixer = mixerFactory.get(config.videoMixer);
 
         for (const [key, value] of Object.entries(config.cameraMap)) {
             const camera = cameraConnectionFactory.get(value);
             if (camera !== undefined) {
-                this.cameras[Number(key)] = camera;
+                this._cameras[Number(key)] = camera;
             }
         }
 
-        this.connectionChange = config.connectionChange;
-        this.enableChangingProgram = config.enableChangingProgram;
+        this._connectionChange = config.connectionChange;
+        this._enableChangingProgram = config.enableChangingProgram;
 
         this.parseSpecialFunctionConfig(config.specialFunction.default, (key, config) => {
-            this.specialFunctionDefault[key] = SpecialFunctionFactory.get(config, logger);
+            this._specialFunctionDefault[key] = SpecialFunctionFactory.get(config, logger);
         });
 
         if (config.specialFunction.alt) {
             this.parseSpecialFunctionConfig(config.specialFunction.alt, (key, config) => {
-                this.specialFunctionAlt[key] = SpecialFunctionFactory.get(config, logger);
+                this._specialFunctionAlt[key] = SpecialFunctionFactory.get(config, logger);
             });
         }
 
         if (config.specialFunction.altLower) {
             this.parseSpecialFunctionConfig(config.specialFunction.altLower, (key, config) => {
-                this.specialFunctionAltLower[key] = SpecialFunctionFactory.get(config, logger);
+                this._specialFunctionAltLower[key] = SpecialFunctionFactory.get(config, logger);
             });
         }
 
-        const connectionChangeEmitter = this.mixer?.imageSelectionChangeGet();
+        const connectionChangeEmitter = this._mixer?.imageSelectionChangeGet();
         if (connectionChangeEmitter !== undefined) {
             connectionChangeEmitter.on('previewChange', (preview: number, onAir: boolean) =>
                 this.mixerPreviewChange(preview, onAir)
@@ -83,16 +83,16 @@ export abstract class Gamepad implements IHmi {
     }
 
     protected changeConnection(direction: EButtonDirection): void {
-        let nextInput = this.connectionChange.default[direction];
-        switch (this.altKeyState) {
+        let nextInput = this._connectionChange.default[direction];
+        switch (this._altKeyState) {
             case EAltKey.alt:
-                if (this.connectionChange.alt) {
-                    nextInput = this.connectionChange.alt[direction];
+                if (this._connectionChange.alt) {
+                    nextInput = this._connectionChange.alt[direction];
                 }
                 break;
             case EAltKey.altLower:
-                if (this.connectionChange.altLower) {
-                    nextInput = this.connectionChange.altLower[direction];
+                if (this._connectionChange.altLower) {
+                    nextInput = this._connectionChange.altLower[direction];
                 }
                 break;
             default:
@@ -100,26 +100,26 @@ export abstract class Gamepad implements IHmi {
         }
 
         if (nextInput) {
-            this.mixer?.changeInput(nextInput);
+            this._mixer?.changeInput(nextInput);
         }
     }
 
     protected specialFunction(key: EButtonDirection): void {
-        if (this.mixer === undefined) {
+        if (this._mixer === undefined) {
             return;
         }
 
-        let specialFunction = this.specialFunctionDefault[key];
-        switch (this.altKeyState) {
+        let specialFunction = this._specialFunctionDefault[key];
+        switch (this._altKeyState) {
             case EAltKey.alt: {
-                const altVariant = this.specialFunctionAlt[key];
+                const altVariant = this._specialFunctionAlt[key];
                 if (altVariant) {
                     specialFunction = altVariant;
                 }
                 break;
             }
             case EAltKey.altLower: {
-                const altLowerVariant = this.specialFunctionAltLower[key];
+                const altLowerVariant = this._specialFunctionAltLower[key];
                 if (altLowerVariant) {
                     specialFunction = altLowerVariant;
                 }
@@ -130,51 +130,51 @@ export abstract class Gamepad implements IHmi {
         }
 
         if (specialFunction) {
-            specialFunction.run(this.mixer);
+            specialFunction.run(this._mixer);
         }
     }
 
     protected pan(value: number): void {
-        this.selectedPreviewCamera?.pan(value);
+        this._selectedPreviewCamera?.pan(value);
     }
 
     protected tilt(value: number): void {
-        this.selectedPreviewCamera?.tilt(value);
+        this._selectedPreviewCamera?.tilt(value);
     }
 
     protected zoom(value: number): void {
-        this.selectedPreviewCamera?.zoom(value);
+        this._selectedPreviewCamera?.zoom(value);
     }
 
     protected focus(value: number): void {
-        this.selectedPreviewCamera?.focus(value);
+        this._selectedPreviewCamera?.focus(value);
     }
 
     protected cut(): void {
-        if (this.enableChangingProgram) {
-            this.mixer?.cut();
+        if (this._enableChangingProgram) {
+            this._mixer?.cut();
         }
     }
 
     protected auto(): void {
-        if (this.enableChangingProgram) {
-            this.mixer?.auto();
+        if (this._enableChangingProgram) {
+            this._mixer?.auto();
         }
     }
 
     protected altKey(press: boolean): void {
-        if (press && this.altKeyState == EAltKey.none) {
-            this.altKeyState = EAltKey.alt;
-        } else if (!press && this.altKeyState == EAltKey.alt) {
-            this.altKeyState = EAltKey.none;
+        if (press && this._altKeyState == EAltKey.none) {
+            this._altKeyState = EAltKey.alt;
+        } else if (!press && this._altKeyState == EAltKey.alt) {
+            this._altKeyState = EAltKey.none;
         }
     }
 
     protected altLowerKey(press: boolean): void {
-        if (press && this.altKeyState == EAltKey.none) {
-            this.altKeyState = EAltKey.altLower;
-        } else if (!press && this.altKeyState == EAltKey.altLower) {
-            this.altKeyState = EAltKey.none;
+        if (press && this._altKeyState == EAltKey.none) {
+            this._altKeyState = EAltKey.altLower;
+        } else if (!press && this._altKeyState == EAltKey.altLower) {
+            this._altKeyState = EAltKey.none;
         }
     }
 
@@ -187,10 +187,10 @@ export abstract class Gamepad implements IHmi {
     }
 
     private mixerPreviewChange(preview: number, onAir: boolean): void {
-        const selectedCamera = this.cameras[preview];
-        if (selectedCamera !== this.selectedPreviewCamera) {
-            if (this.selectedOnAirCamera !== this.selectedPreviewCamera) {
-                this.selectedOnAirCamera?.tallyState('off');
+        const selectedCamera = this._cameras[preview];
+        if (selectedCamera !== this._selectedPreviewCamera) {
+            if (this._selectedOnAirCamera !== this._selectedPreviewCamera) {
+                this._selectedOnAirCamera?.tallyState('off');
             }
             this.zoom(0);
             this.focus(0);
@@ -198,10 +198,10 @@ export abstract class Gamepad implements IHmi {
             this.tilt(0);
         }
 
-        this.selectedPreviewCamera = selectedCamera;
+        this._selectedPreviewCamera = selectedCamera;
         if (selectedCamera !== undefined) {
             this.printConnectionMessage(preview, selectedCamera.connectionString, onAir);
-            if (this.selectedOnAirCamera !== selectedCamera) {
+            if (this._selectedOnAirCamera !== selectedCamera) {
                 selectedCamera.tallyState('preview');
             }
         } else {
@@ -210,16 +210,16 @@ export abstract class Gamepad implements IHmi {
     }
 
     private mixerProgramChange(program: number): void {
-        const newOnAirCamera = this.cameras[program];
-        if (newOnAirCamera !== this.selectedOnAirCamera) {
-            if (this.selectedOnAirCamera !== this.selectedPreviewCamera) {
-                this.selectedOnAirCamera?.tallyState('off');
+        const newOnAirCamera = this._cameras[program];
+        if (newOnAirCamera !== this._selectedOnAirCamera) {
+            if (this._selectedOnAirCamera !== this._selectedPreviewCamera) {
+                this._selectedOnAirCamera?.tallyState('off');
             } else {
-                this.selectedPreviewCamera?.tallyState('preview');
+                this._selectedPreviewCamera?.tallyState('preview');
             }
-            this.selectedOnAirCamera = newOnAirCamera;
-            if (this.selectedOnAirCamera !== undefined) {
-                this.selectedOnAirCamera.tallyState('program');
+            this._selectedOnAirCamera = newOnAirCamera;
+            if (this._selectedOnAirCamera !== undefined) {
+                this._selectedOnAirCamera.tallyState('program');
             }
         }
     }
