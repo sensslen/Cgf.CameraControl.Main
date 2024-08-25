@@ -19,8 +19,8 @@ export type ISpecialFunctionMacroToggleConditionConfiguration = z.infer<
 
 export const specialFunctionMacroToggleConfigurationSchema = specialFunctionDefinitionConfigurationSchema
     .extend({
-        indexOn: z.number().int().positive(),
-        indexOff: z.number().int().positive(),
+        indexOn: z.number().int().nonnegative(),
+        indexOff: z.number().int().nonnegative(),
         condition: specialFunctionMacroToggleConditionConfigurationSchema,
     })
     .passthrough();
@@ -30,7 +30,7 @@ export type ISpecialFunctionMacroToggleConfiguration = z.infer<typeof specialFun
 export const specialFunctionMacroToggleConfigConditionKeyConfigurationSchema =
     specialFunctionMacroToggleConditionConfigurationSchema
         .extend({
-            key: z.number().int().positive(),
+            key: z.number().int().nonnegative(),
         })
         .passthrough();
 
@@ -41,8 +41,8 @@ export type ISpecialFunctionMacroToggleConfigConditionKeyConfiguration = z.infer
 export const specialFunctionMacroToggleConfigConditionAuxSelectionConfigurationSchema =
     specialFunctionMacroToggleConditionConfigurationSchema
         .extend({
-            aux: z.number().int().positive(),
-            selection: z.number().int().positive(),
+            aux: z.number().int().nonnegative(),
+            selection: z.number().int().nonnegative(),
         })
         .passthrough();
 

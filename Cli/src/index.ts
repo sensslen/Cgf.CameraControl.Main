@@ -33,7 +33,7 @@ async function run() {
     await core.cameraFactory.builderAdd(new WebsocketPtzLancCameraBuilder(logger), logger);
     await core.cameraFactory.builderAdd(new SignalrPtzLancCameraBuilder(logger), logger);
     await core.mixerFactory.builderAdd(new AtemBuilder(logger), logger);
-    await core.mixerFactory.builderAdd(new PassthroughBuilder(), logger);
+    await core.mixerFactory.builderAdd(new PassthroughBuilder(logger), logger);
     await core.hmiFactory.builderAdd(new Fx10Builder(logger, core.mixerFactory, core.cameraFactory), logger);
     await core.hmiFactory.builderAdd(new Rumblepad2Builder(logger, core.mixerFactory, core.cameraFactory), logger);
 

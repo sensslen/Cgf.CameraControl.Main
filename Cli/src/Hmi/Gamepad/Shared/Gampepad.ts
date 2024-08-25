@@ -52,18 +52,18 @@ export abstract class Gamepad implements IHmi {
         this.enableChangingProgram = config.enableChangingProgram;
 
         this.parseSpecialFunctionConfig(config.specialFunction.default, (key, config) => {
-            this.specialFunctionDefault[key] = SpecialFunctionFactory.get(config);
+            this.specialFunctionDefault[key] = SpecialFunctionFactory.get(config, logger);
         });
 
         if (config.specialFunction.alt) {
             this.parseSpecialFunctionConfig(config.specialFunction.alt, (key, config) => {
-                this.specialFunctionAlt[key] = SpecialFunctionFactory.get(config);
+                this.specialFunctionAlt[key] = SpecialFunctionFactory.get(config, logger);
             });
         }
 
         if (config.specialFunction.altLower) {
             this.parseSpecialFunctionConfig(config.specialFunction.altLower, (key, config) => {
-                this.specialFunctionAltLower[key] = SpecialFunctionFactory.get(config);
+                this.specialFunctionAltLower[key] = SpecialFunctionFactory.get(config, logger);
             });
         }
 
