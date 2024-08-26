@@ -5,7 +5,11 @@
 
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: |
+      /Cli
+      /Core
+      /Signalr.PtzLanc.Camera
+      /Websocket.PtzLanc.Camera
     schedule:
       interval: "weekly"
