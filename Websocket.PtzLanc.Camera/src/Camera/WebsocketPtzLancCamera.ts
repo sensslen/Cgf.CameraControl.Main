@@ -66,12 +66,14 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     }
 
     public pan(value: number): void {
+        value = this.interpolateSpeed(value);
         this.setState((state) => {
             state.pan = this.invertIfNecessaryForPanTilt(this.multiplyRoundAndCrop(value * 255, 255));
             return state;
         });
     }
     public tilt(value: number): void {
+        value = this.interpolateSpeed(value);
         this.setState((state) => {
             state.tilt = this.invertIfNecessaryForPanTilt(this.multiplyRoundAndCrop(value * 255, 255));
             return state;
@@ -119,6 +121,13 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
 
     private logError(toLog: string) {
         this.logger.error(`WebsocketCamera(${this.config.ip}):${toLog}`);
+    }
+    private interpolateSpeed(input: number): number {
+        if (input > 0) {
+            return input * input;
+        } else {
+            return -input * input;
+        }
     }
     private multiplyRoundAndCrop(value: number, maximumAbsolute: number): number {
         const maximized = Math.max(-maximumAbsolute, Math.min(maximumAbsolute, value));
