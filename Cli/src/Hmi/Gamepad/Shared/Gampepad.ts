@@ -7,8 +7,11 @@ import {
     IVideoMixer,
     VideomixerFactory,
 } from 'cgf.cameracontrol.main.core';
-import { EButtonDirection, IConnectionChangeConfiguration, IGamepadConfiguration } from './IGamepadConfiguration';
+import { EButtonDirection, IGamepadConfiguration } from './IGamepadConfiguration';
 
+import { ConnectionChangeFactory } from './ConnectionChange/ConnectionChangeFactory';
+import { IAltKeyConfiguration } from './IAltKeyConfiguration';
+import { IConnectionChange } from './ConnectionChange/IConnectionChange';
 import { ISpecialFunction } from './SpecialFunctions/ISpecialFunction';
 import { ISpecialFunctionDefinition } from './SpecialFunctions/ISpecialFunctionDefinition';
 import { SpecialFunctionFactory } from './SpecialFunctions/SpecialFunctionFactory';
@@ -25,8 +28,9 @@ export abstract class Gamepad implements IHmi {
     private readonly _cameras: { [key: number]: ICameraConnection } = {};
     private _selectedPreviewCamera?: ICameraConnection;
     private _selectedOnAirCamera?: ICameraConnection;
-    private readonly _connectionChange: IConnectionChangeConfiguration;
+    private readonly _connectionChange: IConnectionChange | undefined;
     private readonly _enableChangingProgram: boolean;
+    private _selectedInput = -1;
 
     private readonly _specialFunctionDefault: { [key in EButtonDirection]?: ISpecialFunction } = {};
     private readonly _specialFunctionAlt: { [key in EButtonDirection]?: ISpecialFunction } = {};
@@ -48,7 +52,6 @@ export abstract class Gamepad implements IHmi {
             }
         }
 
-        this._connectionChange = config.connectionChange;
         this._enableChangingProgram = config.enableChangingProgram;
 
         this.parseSpecialFunctionConfig(config.specialFunction.default, (key, config) => {
@@ -67,6 +70,8 @@ export abstract class Gamepad implements IHmi {
             });
         }
 
+        this._connectionChange = ConnectionChangeFactory.get(config.connectionChange, logger);
+
         const connectionChangeEmitter = this._mixer?.imageSelectionChangeGet();
         if (connectionChangeEmitter !== undefined) {
             connectionChangeEmitter.on('previewChange', (preview: number, onAir: boolean) =>
@@ -83,21 +88,11 @@ export abstract class Gamepad implements IHmi {
     }
 
     protected changeConnection(direction: EButtonDirection): void {
-        let nextInput = this._connectionChange.default[direction];
-        switch (this._altKeyState) {
-            case EAltKey.alt:
-                if (this._connectionChange.alt) {
-                    nextInput = this._connectionChange.alt[direction];
-                }
-                break;
-            case EAltKey.altLower:
-                if (this._connectionChange.altLower) {
-                    nextInput = this._connectionChange.altLower[direction];
-                }
-                break;
-            default:
-                break;
+        if (this._connectionChange === undefined) {
+            return;
         }
+
+        const nextInput = this._connectionChange.next(direction, this._selectedInput, this.getAltKeyState());
 
         if (nextInput) {
             this._mixer?.changeInput(nextInput);
@@ -187,6 +182,7 @@ export abstract class Gamepad implements IHmi {
     }
 
     private mixerPreviewChange(preview: number, onAir: boolean): void {
+        this._selectedInput = preview;
         const selectedCamera = this._cameras[preview];
         if (selectedCamera !== this._selectedPreviewCamera) {
             if (this._selectedOnAirCamera !== this._selectedPreviewCamera) {
@@ -240,6 +236,17 @@ export abstract class Gamepad implements IHmi {
             if (value !== undefined) {
                 run(key, value);
             }
+        }
+    }
+
+    private getAltKeyState(): IAltKeyConfiguration {
+        switch (this._altKeyState) {
+            case EAltKey.alt:
+                return { alt: true, altLower: false };
+            case EAltKey.altLower:
+                return { alt: false, altLower: true };
+            default:
+                return { alt: false, altLower: false };
         }
     }
 
