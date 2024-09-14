@@ -23,17 +23,21 @@ The configuration format is basically shown in [src/config.json](./src/config.js
 
 ### Video mixer connections
 
-The application basically supports connections to multiple video mixers. These are configured in the AtemConnections array which is located in the root element of the configuration file directly.
+The application basically supports connections to multiple video mixers. These are configured in the videoMixers array which is located in the root element of the configuration file directly.
 
 ```json5
-    "AtemConnections": [
+    "videoMixers": [
         {
-            "identifier": "me4",
-            "IP": "192.168.1.123"
-        },
-        {
-            "identifier": "i am a string identifier",
-            "IP": "192.168.1.123"
+            // Type of the Video Mixer
+            "type": "blackmagicdesign/atem",
+
+            // Instance of the Video Mixer: is used later to access the right Mixer
+            "instance": 1,
+
+            "ip": "192.168.1.123",
+
+            // Selection of the mixEffectBlock: The Atem which is used hat 4 different mixEffectBlocks starting by 0 up to 3
+            "mixEffectBlock": 0
         }
     ],
 ```
@@ -45,89 +49,96 @@ Also there are multiple gamepads supported by one instance of the application. E
 > :warning: **Currently there is the unfortunate restriction to only support one gamepad per gamepad type. This is a restriction of the gamepad connection library used. This is planned to be changed in the future.**
 
 ```json5
- "Controllers": [
+ "interfaces": [
         {
-            // Type of the gamepad to connect to
-            "ControllerType": "logitech/gamepadf310",
+            // Type of the interface to connect to
+            "type": "logitech/gamepadf310",
 
             // Serial number of the gamepad (used to identify the exact camepad to connect to -- currently not supported)
             //"SerialNumber": 123553
 
-            // The Atem identifier (used in the Atem Connection array) associated with the Mixing Console that should be controlled
-            "AtemConnection": "me4",
+            // Every Interface needs a unique instance to seperate them from each other: The first Gamepad has an instance of 1
+            "instance": 1,
 
-            // The effective ME Block that should be controlled. Be aware that this number is zero based!
-            "AtemMixEffectBlock": 2,
+            // Every Interface can only controll one Video Mixer. The Video Mixer is selectet by the Number from videoMixer
+            "videoMixer": 1,
 
-            // Key mapping for the special function keys on the Gamepad: A, B, X, Y.
-            "SpecialFunctions": {
-                "A": {
-                    "Type": "key",
-                    "Index": 0
+            // If there is one person controlling the cameras and another person is cutting the livestream there is a savety function.
+            "enableChangingProgram":false,
+            // If the "enableChangingProgram" is set to false, the person who is controlling the cameras is not able to cut with his controller
+
+            // To control the cameras the buttons of the gamepad needs to be configurated:
+            "connectionChange": {
+
+                // There are three different posibilities to select something through the directionpad: default, alt and altlower. Example:
+                "default": {
+                    "up": 1,
+                    "right": 2,
+                    "down": 3,
+                    "left": 4
                 },
-                "B": {
-                    "Type": "macro",
-                    "Index": 0
-                }
-            },
-            // This tag may be omitted. If so, SpecialFunctions will be used
-            "AltSpecialFunctions":{
-                "X": {
-                    "Type": "key",
-                    "Index": 1
-                }
-            },
-            // This tag may be omitted. If so, SpecialFunctions will be used
-            "AltLowerSpecialFunctions":{
-                "Y": {
-                    "Type": "macro",
-                    "Index": 2
+                "alt": {
+                    "up": 5,
+                    "right": 6,
+                    "down": 7,
+                    "left": 8
+                },
+                "altlower": {
+                    "up": 9,
+                    "right": 10,
+                    "down": 11,
+                    "left": 12
+                },
+
+            // Key mapping for the special function keys on the Gamepad: A, B, X, Y. It could be similat to the onfigurating obove with default, alt and altlower but there is no need for that much keys. The only who is used is default.
+            "specialFunction": {
+                "default": {
+
+                    // Definition which button is calling the folowing part
+                    "down": {
+
+                        // Definition which type the folowing part of code is
+                        "type": "macroToggle",
+
+                        // Name of the macro which is called (macro 23 is showing the banner and macro 24 is hiding the banner)
+                        "indexOn": 23,
+                        "indexOff": 24,
+
+                        // Condition to check if the banner needs to be shown or hidden:
+                        "condition": {
+
+                        // Search for the key 0 on the Atem
+                        "type": "key",
+                        "key": 0
+                        // If the Key is not active call indexOn: It is going to show the banner
+                        // If the Key is allready pressed call indexOff: It is going to hide the banner
+                        }
+                    },
+                    "up": {
+                        "type": "macroToggle",
+                        "indexOn": 20,
+                        "indexOff": 21,
+                        "condition": {
+
+                        // Search for the AUX output 5 on the Atem. If selection 16 is active the toggle is on
+                        // If the Toggle is off change the output for the livestream to show the slides of the Pre-Programm
+                        // If the Toggle is on change the output for the livestream to show the livestream output
+                        "type": "aux_selection",
+                        "aux": 5,
+                        "selection": 16
+                        }
+                    }
                 }
             },
 
-            // Array of connections to images -- see Image Connections chapter below
-            "ImageConnections": [
-                //...
-            ]
+            // Selection on thich port of the Atem is which camera connected
+            "cameraMap": {
+                "1": 1,
+                "2": 2,
+                "3": 3,
+                "4": 4,
+                "7": 6
+            }
         }
     ]
-```
-
-#### <a name="image_connections"></a>Image Connections
-
-The `ImageConnections` tag allows to specify an arbitrary number of Inputs to the video Mixer to be controlled via a Gamepad. This tag is structured like following:
-
-```json5
-{
-    // The input number of the image (this corresponds to the physical input number on the video mixer)
-    // The name of the input is taken from ATEM
-    AtemInputNumber: 1,
-
-    // Optional section that specifies the connection to the camera control.
-    // This section is required to get access to the pan/tilt and the zoom feature of a camera
-    CgfCameraConnection: {
-        ConnectionUrl: 'http://localhost:5000',
-        ConnectionPort: 'COM6',
-    },
-
-    // This section specifies which camera should be selected when the connection change buttons get pressed. Possible values: up, down, left, right
-    ConnectionChangeDefinition: {
-        left: 2,
-        right: 2,
-    },
-
-    // Connection change definition when the "Alt" key is pressed while changing the connection.
-    // This section may be omitted. If so, the values defined in ConnectionChangeDefinition are used
-    AltConnectionChangeDefinition: {
-        up: 5,
-        down: 6,
-    },
-
-    // Connection change definition when the "AltLower" key is pressed while changing the connection.
-    // This section may be omitted. If so, the values defined in ConnectionChangeDefinition are used
-    AltLowerConnectionChangeDefinition: {
-        up: 7,
-        down: 8,
-    },
-}
 ```
