@@ -54,8 +54,8 @@ Also there are multiple gamepads supported by one instance of the application. E
             // Type of the interface to connect to
             "type": "logitech/gamepadf310",
 
-            // Serial number of the gamepad (used to identify the exact camepad to connect to -- currently not supported)
-            //"SerialNumber": 123553
+            // Serial number of the gamepad (used to identify the exact gamepad to connect to. This parameter is optional)
+            "serialNumber": 123553,
 
             // Every Interface needs a unique instance to seperate them from each other: The first Gamepad has an instance of 1
             "instance": 1,
@@ -63,7 +63,7 @@ Also there are multiple gamepads supported by one instance of the application. E
             // Every Interface can only controll one Video Mixer. The Video Mixer is selectet by the Number from videoMixer
             "videoMixer": 1,
 
-            // If there is one person controlling the cameras and another person is cutting the livestream there is a savety function.
+            // If there is one person controlling the cameras and another person is cutting as a savety measure you can disable cutting. Default value is true
             "enableChangingProgram":false,
             // If the "enableChangingProgram" is set to false, the person who is controlling the cameras is not able to cut with his controller
 
@@ -90,42 +90,43 @@ Also there are multiple gamepads supported by one instance of the application. E
                     "left": 12
                 },
 
-            // Key mapping for the special function keys on the Gamepad: A, B, X, Y. It could be similat to the onfigurating obove with default, alt and altlower but there is no need for that much keys. The only who is used is default.
-            "specialFunction": {
-                "default": {
+                // Key mapping for the special function keys on the Gamepad: A, B, X, Y. It could be similat to the onfigurating obove with default, alt and altlower but there is no need for that much keys. The only who is used is default.
+                "specialFunction": {
+                    "default": {
 
-                    // Definition which button is calling the folowing part
-                    "down": {
+                        // Definition which button is calling the folowing part
+                        "down": {
 
-                        // Definition which type the folowing part of code is
-                        "type": "macroToggle",
+                            // Definition which type the folowing part of code is
+                            "type": "macroToggle",
 
-                        // Name of the macro which is called (macro 23 is showing the banner and macro 24 is hiding the banner)
-                        "indexOn": 23,
-                        "indexOff": 24,
+                            // Name of the macro which is called (macro 23 is showing the banner and macro 24 is hiding the banner)
+                            "indexOn": 23,
+                            "indexOff": 24,
 
-                        // Condition to check if the banner needs to be shown or hidden:
-                        "condition": {
+                            // Condition to check if the banner needs to be shown or hidden:
+                            "condition": {
 
-                        // Search for the key 0 on the Atem
-                        "type": "key",
-                        "key": 0
-                        // If the Key is not active call indexOn: It is going to show the banner
-                        // If the Key is allready pressed call indexOff: It is going to hide the banner
-                        }
-                    },
-                    "up": {
-                        "type": "macroToggle",
-                        "indexOn": 20,
-                        "indexOff": 21,
-                        "condition": {
+                            // Search for the key 0 on the Atem
+                            "type": "key",
+                            "key": 0
+                            // If the Key is not active call indexOn: It is going to show the banner
+                            // If the Key is allready pressed call indexOff: It is going to hide the banner
+                            }
+                        },
+                        "up": {
+                            "type": "macroToggle",
+                            "indexOn": 20,
+                            "indexOff": 21,
+                            "condition": {
 
-                        // Search for the AUX output 5 on the Atem. If selection 16 is active the toggle is on
-                        // If the Toggle is off change the output for the livestream to show the slides of the Pre-Programm
-                        // If the Toggle is on change the output for the livestream to show the livestream output
-                        "type": "aux_selection",
-                        "aux": 5,
-                        "selection": 16
+                            // Search for the AUX output 5 on the Atem. If selection 16 is active the toggle is on
+                            // If the Toggle is off change the output for the livestream to show the slides of the Pre-Programm
+                            // If the Toggle is on change the output for the livestream to show the livestream output
+                            "type": "aux_selection",
+                            "aux": 5,
+                            "selection": 16
+                            }
                         }
                     }
                 }
