@@ -1,21 +1,8 @@
+import { EButtonDirection } from './EButtonDirection';
 import { configSchema } from 'cgf.cameracontrol.main.core';
+import { connectionChangeConfigurationSchema } from './ConnectionChange/IConnectionChangeConfiguration';
 import { specialFunctionDefinitionConfigurationSchema } from './SpecialFunctions/ISpecialFunctionDefinition';
 import { z } from 'zod';
-
-export enum EButtonDirection {
-    up = 'up',
-    down = 'down',
-    left = 'left',
-    right = 'right',
-}
-
-const connectionChangeConfigurationSchema = z
-    .object({
-        default: z.record(z.nativeEnum(EButtonDirection), z.number().int().positive().optional()),
-        alt: z.record(z.nativeEnum(EButtonDirection), z.number().int().positive().optional()).optional(),
-        altLower: z.record(z.nativeEnum(EButtonDirection), z.number().int().positive().optional()).optional(),
-    })
-    .passthrough();
 
 export const gamepadConfigurationSchema = configSchema
     .extend({
@@ -31,10 +18,11 @@ export const gamepadConfigurationSchema = configSchema
          * In the map the key is the input number on the mixer and the value is
          * the camera index in the configuration
          */
-        cameraMap: z.record(z.coerce.number().int().positive(), z.number().int().positive()),
+        cameraMap: z.record(z.coerce.number().int().nonnegative(), z.number().int().nonnegative()),
         enableChangingProgram: z.boolean().default(true),
     })
     .passthrough();
 
 export type IConnectionChangeConfiguration = z.infer<typeof connectionChangeConfigurationSchema>;
 export type IGamepadConfiguration = z.infer<typeof gamepadConfigurationSchema>;
+export { EButtonDirection };

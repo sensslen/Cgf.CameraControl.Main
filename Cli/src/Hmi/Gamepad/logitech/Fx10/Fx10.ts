@@ -1,7 +1,7 @@
 import { CameraConnectionFactory, ILogger, VideomixerFactory } from 'cgf.cameracontrol.main.core';
 import { IConfig as IGamepadConfig, NodeGamepad, ILogger as NodeGamepadLogger } from '@sensslen/node-gamepad';
 
-import { EButtonDirection } from '../../Shared/IGamepadConfiguration';
+import { EButtonDirection } from '../../Shared/EButtonDirection';
 import { ILogitechFx10Config } from './ILogitechFx10Config';
 import { LogitechGamepad } from '../LogitechGamepad';
 
