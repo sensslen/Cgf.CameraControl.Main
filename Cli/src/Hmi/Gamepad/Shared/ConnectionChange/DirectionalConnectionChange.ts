@@ -4,7 +4,7 @@ import { IConnectionChange } from './IConnectionChange';
 import { IDirectionalConnectionChangeDefinition } from './IConnectionChangeConfiguration';
 
 export class DirectionalConnectionChange implements IConnectionChange {
-    constructor(private _config: IDirectionalConnectionChangeDefinition) { }
+    constructor(private _config: IDirectionalConnectionChangeDefinition) {}
 
     next(direction: EButtonDirection, currentSelection: number, _: IAltKeyConfiguration): number | undefined {
         let nextSelectionMap = this._config.directions[currentSelection];
