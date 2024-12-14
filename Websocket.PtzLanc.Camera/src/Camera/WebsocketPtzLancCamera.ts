@@ -18,9 +18,8 @@ export class WebsocketPtzLancCamera implements ICameraConnection {
     ) {
         const connectionId = `ws://${this.config.ip}/ws`;
         this._websocket = new WebSocket(connectionId, null, {
-            /* eslint-disable @typescript-eslint/naming-convention */
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             WebSocket: WS,
-            /* eslint-enable @typescript-eslint/naming-convention */
         });
 
         this._websocket.onopen = (_) => {
