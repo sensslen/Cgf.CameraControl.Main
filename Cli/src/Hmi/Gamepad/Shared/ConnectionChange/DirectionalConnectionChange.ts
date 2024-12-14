@@ -12,7 +12,6 @@ export class DirectionalConnectionChange implements IConnectionChange {
             const lowestDefinedKey = Number(Object.keys(this._config.directions)[0]);
             nextSelectionMap = this._config.directions[lowestDefinedKey];
         }
-        const directionMap = this._config.directions[currentSelection];
-        return directionMap[direction];
+        return nextSelectionMap[direction];
     }
 }
