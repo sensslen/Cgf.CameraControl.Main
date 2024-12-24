@@ -45,10 +45,9 @@
     },
     "dependencies": {
         "cgf.cameracontrol.main.core": "file:../Core/dist",
-        "partysocket": "^1.0.3",
         "rxjs": "^7.8.1",
         "strict-event-emitter-types": "^2.0.0",
-        "ws": "^8.18.0",
+        "websocket-reconnect": "^1.0.10",
         "zod": "^3.22.4",
         "zod-validation-error": "^3.3.1"
     },

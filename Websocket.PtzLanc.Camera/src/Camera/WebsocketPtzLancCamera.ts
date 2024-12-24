@@ -3,53 +3,59 @@ import { WebsocketPtzLancCameraSpeedState, speedCameraStateSchema } from './Webs
 import { ICameraConnection } from 'cgf.cameracontrol.main.core';
 import { ILogger } from 'cgf.cameracontrol.main.core';
 import { IWebsocketPtzLancCameraConfiguration } from './IWebsocketPtzLancCameraConfiguration';
-import WS from 'ws';
-import { WebSocket } from 'partysocket';
+import { WsReconnect } from 'websocket-reconnect';
 
 export class WebsocketPtzLancCamera implements ICameraConnection {
-    private _websocket: WebSocket;
+    private _websocket: WsReconnect;
     private _requestState = speedCameraStateSchema.parse({});
     private _canSend = false;
     private readonly _connectionSubject = new BehaviorSubject<boolean>(false);
+    private readonly _connectionId: string;
 
     constructor(
         private readonly config: IWebsocketPtzLancCameraConfiguration,
         private readonly logger: ILogger
     ) {
-        const connectionId = `ws://${this.config.ip}/ws`;
-        this._websocket = new WebSocket(connectionId, null, {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            WebSocket: WS,
+        this._connectionId = `ws://${this.config.ip}/ws`;
+        this._websocket = new WsReconnect({ reconnectDelay: 1000 });
+
+        this._websocket.on('open', (_) => {
+            this.log(`websocket connected: ${this._connectionId}`);
+            this._connectionSubject.next(true);
         });
 
-        this._websocket.onopen = (_) => {
-            this.log(`websocket connected: ${connectionId}`);
-            this._connectionSubject.next(true);
-        };
-
-        this._websocket.onerror = (errorevent) => {
-            this.log(`websocket error on connection: ${connectionId}\n${errorevent.message}\n${errorevent.error}`);
-        };
-
-        this._websocket.onclose = (closeevent) => {
+        this._websocket.on('error', (errorevent) => {
             this.log(
-                `websocket closed - trying automatic reconnect: ${connectionId}\n${closeevent.code}-${closeevent.reason}`
+                `websocket error on connection: ${this._connectionId}\n${errorevent.message}\n${errorevent.error}`
+            );
+        });
+
+        this._websocket.on('close', (closeevent) => {
+            this.log(
+                `websocket closed - trying automatic reconnect: ${this._connectionId}\n${closeevent.code}-${closeevent.reason}`
             );
             this._connectionSubject.next(false);
-        };
+        });
 
-        this._websocket.onmessage = (message) => {
+        this._websocket.on('message', (message) => {
             const parseResult = speedCameraStateSchema.safeParse(message.data);
             if (parseResult.success !== false && !this.equals(this._requestState, parseResult.data)) {
                 this.send();
             } else {
                 this._canSend = true;
             }
-        };
+        });
+
+        this._websocket.on('reconnect', () => {
+            this.log(`websocket closed - trying automatic reconnect: ${this._connectionId}`);
+            this._connectionSubject.next(false);
+        });
+
+        this._websocket.open(this._connectionId);
     }
 
     public get connectionString(): string {
-        return this._websocket.url;
+        return this._connectionId;
     }
 
     public get whenConnectedChanged(): Observable<boolean> {
