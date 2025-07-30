@@ -1,4 +1,4 @@
-# Cgf.CameraControl.Main [![CodeFactor](https://www.codefactor.io/repository/github/sensslen/cgf.cameracontrol.main.cli/badge)](https://www.codefactor.io/repository/github/sensslen/cgf.cameracontrol.main.cli)
+# Cgf.CameraControl.Main
 
 Typescript application that uses a Gamepad to control a Video mixer and multiple cameras.
 
