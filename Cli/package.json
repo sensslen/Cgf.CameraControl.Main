@@ -37,7 +37,7 @@
         "everpolate-ts": "^0.0.2",
         "rxjs": "^7.8.1",
         "strict-event-emitter-types": "^2.0.0",
-        "yargs": "^17.4.1",
+        "yargs": "^18.0.0",
         "zod": "^3.23.8",
         "zod-validation-error": "^3.3.1"
     },
