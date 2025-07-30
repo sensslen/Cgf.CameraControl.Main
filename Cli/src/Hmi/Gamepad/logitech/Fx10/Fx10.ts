@@ -86,10 +86,6 @@ export class Fx10 extends LogitechGamepad {
             this.specialFunction(EButtonDirection.left);
         });
 
-        this._pad.on('Y:press', () => {
-            this.specialFunction(EButtonDirection.up);
-        });
-
         this._pad.start();
     }
 
