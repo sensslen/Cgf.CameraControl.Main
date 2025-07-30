@@ -31,6 +31,6 @@
     "start": "node Cli/dist/index.js"
   },
   "dependencies": {
-    "sort-package-json": "^2.12.0"
+    "sort-package-json": "^3"
   }
 }

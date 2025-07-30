@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const speedCameraStateSchema = z.object({
     pan: z.number().min(-255).max(255).default(0),

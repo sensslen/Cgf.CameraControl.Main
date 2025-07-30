@@ -1,35 +1,26 @@
 import { EButtonDirection } from '../EButtonDirection';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export enum EConnectionChangeType {
     direct = 'direct',
     directional = 'directional',
 }
 
-export const connectionChangeConfigurationSchema = z
-    .object({
-        type: z.nativeEnum(EConnectionChangeType),
-    })
-    .passthrough();
+export const connectionChangeConfigurationSchema = z.looseObject({
+    type: z.enum(EConnectionChangeType),
+});
 
 export type IConnectionChangeDefinition = z.infer<typeof connectionChangeConfigurationSchema>;
 
-export const directConnectionChangeConfigurationSchema = connectionChangeConfigurationSchema
-    .extend({
-        default: z.record(z.nativeEnum(EButtonDirection), z.number().int().nonnegative().optional()),
-        alt: z.record(z.nativeEnum(EButtonDirection), z.number().int().nonnegative().optional()).optional(),
-        altLower: z.record(z.nativeEnum(EButtonDirection), z.number().int().nonnegative().optional()).optional(),
-    })
-    .passthrough();
+export const directConnectionChangeConfigurationSchema = connectionChangeConfigurationSchema.extend({
+    default: z.partialRecord(z.enum(EButtonDirection), z.int().nonnegative().optional()),
+    alt: z.partialRecord(z.enum(EButtonDirection), z.int().nonnegative().optional()).optional(),
+    altLower: z.partialRecord(z.enum(EButtonDirection), z.int().nonnegative().optional()).optional(),
+});
 
-export const directionalConnectionChangeConfigurationSchema = connectionChangeConfigurationSchema
-    .extend({
-        directions: z.record(
-            z.coerce.number().int().nonnegative(),
-            z.record(z.nativeEnum(EButtonDirection), z.number().int().nonnegative())
-        ),
-    })
-    .passthrough();
+export const directionalConnectionChangeConfigurationSchema = connectionChangeConfigurationSchema.extend({
+    directions: z.record(z.int().nonnegative(), z.record(z.enum(EButtonDirection), z.int().nonnegative())),
+});
 
 export type IDirectConnectionChangeDefinition = z.infer<typeof directConnectionChangeConfigurationSchema>;
 export type IDirectionalConnectionChangeDefinition = z.infer<typeof directionalConnectionChangeConfigurationSchema>;
