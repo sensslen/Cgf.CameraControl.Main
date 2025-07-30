@@ -48,7 +48,7 @@
         "rxjs": "^7.8.1",
         "strict-event-emitter-types": "^2.0.0",
         "websocket-reconnect": "^1.0.10",
-        "zod": "^3.22.4",
+        "zod": "^4.0.0",
         "zod-validation-error": "^3.3.1"
     },
     "devDependencies": {
