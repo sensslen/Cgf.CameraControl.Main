@@ -21,6 +21,5 @@ export const gamepadConfigurationSchema = configSchema.extend({
     enableChangingProgram: z.boolean().default(true),
 });
 
-export type IConnectionChangeConfiguration = z.infer<typeof connectionChangeConfigurationSchema>;
 export type IGamepadConfiguration = z.infer<typeof gamepadConfigurationSchema>;
 export { EButtonDirection };
