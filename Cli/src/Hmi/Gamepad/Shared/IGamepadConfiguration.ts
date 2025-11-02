@@ -17,7 +17,16 @@ export const gamepadConfigurationSchema = configSchema.extend({
      * In the map the key is the input number on the mixer and the value is
      * the camera index in the configuration
      */
-    cameraMap: z.record(z.int().nonnegative(), z.int().nonnegative()),
+    cameraMap: z
+        .record(z.string().regex(/^\d+$/, 'Key must be a non-negative integer'), z.int().nonnegative())
+        .transform((obj) => {
+            const result: Record<number, number> = {};
+            for (const [key, value] of Object.entries(obj)) {
+                const numKey = parseInt(key, 10);
+                result[numKey] = value;
+            }
+            return result;
+        }),
     enableChangingProgram: z.boolean().default(true),
 });
 
