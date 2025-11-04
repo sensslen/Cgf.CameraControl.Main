@@ -39,7 +39,7 @@
         "strict-event-emitter-types": "^2.0.0",
         "yargs": "^18",
         "zod": "^4",
-        "zod-validation-error": "^4"
+        "zod-validation-error": "^5.0.0"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.2.0",
