@@ -36,7 +36,7 @@
         "sort": "sort-package-json package.json"
     },
     "dependencies": {
-        "@microsoft/signalr": "^9.0.0",
+        "@microsoft/signalr": "^10.0.0",
         "axios": "^1.7.4",
         "cgf.cameracontrol.main.core": "file:../Core/dist",
         "rxjs": "^7.8.1",
