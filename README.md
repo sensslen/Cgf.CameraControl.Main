@@ -7,70 +7,55 @@ Typescript application that uses a Gamepad to control a Video mixer and multiple
 To start using this project use the following steps:
 
 -   install [node.js](https://nodejs.org/en/)
--   clone the repository (`git clone https://github.com/sensslen/Cgf.CameraControl.Main.Cli.git`)
+-   clone the repository (`git clone https://github.com/sensslen/Cgf.CameraControl.Main.git`)
 -   install dependencies by calling `npm install`
--   edit [src/config.json](./src/config.json) to match your setup or just create a new configuration and run the application with the config parameter.
+-   edit [Cli/src/config.json](./Cli/src/config.json) to match your setup or just create a new configuration and run the application with the config parameter.
 -   compile the app : `npm run build`
--   run the application using `node dist/index.js --config path/to/my/specail/config.json` or use one of the starter scripts available for Windows and Mac
+-   run the application using `npm start` or `node Cli/dist/index.js --config path/to/my/config.json`
 
-> **⚠ WARNING: Under Construction.**  
-> The following chapters need to be rebuilt. These reflect the configuration of version 1 and do no longer apply
 ## Configuration
 
-Configuration of the Application is storead as JSON File. There is the default configuration ([src/config.json](./src/config.json)) which is loaded when the config parameter is omitted when starting the application. Additionally the application may be started with a custom configuration that may be located anywhere on the file system.
+Configuration of the application is stored as a JSON file. There is a default configuration ([Cli/src/config.json](./Cli/src/config.json)) which is loaded when the config parameter is omitted when starting the application. Additionally, the application may be started with a custom configuration that may be located anywhere on the file system.
 
-The configuration format is basically shown in [src/config.json](./src/config.json). Please keep reading for further explanations.
+The configuration file has three main sections: `cams` (camera connections), `videoMixers` (video mixer connections), and `interfaces` (controller/gamepad configurations).
 
-### Video mixer connections
+### Complete Configuration Example
 
-The application basically supports connections to multiple video mixers. These are configured in the videoMixers array which is located in the root element of the configuration file directly.
-
-```json5
+```json
+{
+    "cams": [
+        {
+            "instance": 1,
+            "type": "websocket/ptzlanc",
+            "ip": "192.168.1.100",
+            "panTiltInvert": false,
+            "showTallyLight": true
+        },
+        {
+            "instance": 2,
+            "type": "signalr/ptzlanc",
+            "connectionUrl": "http://192.168.1.101:5000",
+            "connectionPort": "COM6",
+            "panTiltInvert": false
+        }
+    ],
     "videoMixers": [
         {
-            // Type of the Video Mixer
-            "type": "blackmagicdesign/atem",
-
-            // Instance of the Video Mixer: is used later to access the right Mixer
             "instance": 1,
-
-            "ip": "192.168.1.123",
-
-            // Selection of the mixEffectBlock: The Atem which is used hat 4 different mixEffectBlocks starting by 0 up to 3
+            "type": "blackmagicdesign/atem",
+            "ip": "192.168.1.240",
             "mixEffectBlock": 0
         }
     ],
-```
-
-### Gamepads
-
-Also there are multiple gamepads supported by one instance of the application. Each gamepad connects to exactly one ME Block on the video mixer and allows to control it. Then there may be an arbitrary number of [Image Connections](#image_connections) associated with it. Each gamepad also supports executing a number of special functions (setting Keys or executing macros).
-
-> :warning: **Currently there is the unfortunate restriction to only support one gamepad per gamepad type. This is a restriction of the gamepad connection library used. This is planned to be changed in the future.**
-
-```json5
- "interfaces": [
+    "interfaces": [
         {
-            // Type of the interface to connect to
-            "type": "logitech/gamepadf310",
-
-            // Serial number of the gamepad (used to identify the exact gamepad to connect to. This parameter is optional)
-            "serialNumber": 123553,
-
-            // Every Interface needs a unique instance to seperate them from each other: The first Gamepad has an instance of 1
             "instance": 1,
-
-            // Every Interface can only controll one Video Mixer. The Video Mixer is selectet by the Number from videoMixer
+            "type": "logitech/gamepadf310",
+            "serialNumber": "optional-serial-number",
             "videoMixer": 1,
-
-            // If there is one person controlling the cameras and another person is cutting as a savety measure you can disable cutting. Default value is true
-            "enableChangingProgram":false,
-            // If the "enableChangingProgram" is set to false, the person who is controlling the cameras is not able to cut with his controller
-
-            // To control the cameras the buttons of the gamepad needs to be configurated:
+            "enableChangingProgram": true,
             "connectionChange": {
-
-                // There are three different posibilities to select something through the directionpad: default, alt and altlower. Example:
+                "type": "direct",
                 "default": {
                     "up": 1,
                     "right": 2,
@@ -83,63 +68,247 @@ Also there are multiple gamepads supported by one instance of the application. E
                     "down": 7,
                     "left": 8
                 },
-                "altlower": {
+                "altLower": {
                     "up": 9,
                     "right": 10,
                     "down": 11,
                     "left": 12
-                },
-
-                // Key mapping for the special function keys on the Gamepad: A, B, X, Y. It could be similat to the onfigurating obove with default, alt and altlower but there is no need for that much keys. The only who is used is default.
-                "specialFunction": {
-                    "default": {
-
-                        // Definition which button is calling the folowing part
-                        "down": {
-
-                            // Definition which type the folowing part of code is
-                            "type": "macroToggle",
-
-                            // Name of the macro which is called (macro 23 is showing the banner and macro 24 is hiding the banner)
-                            "indexOn": 23,
-                            "indexOff": 24,
-
-                            // Condition to check if the banner needs to be shown or hidden:
-                            "condition": {
-
-                            // Search for the key 0 on the Atem
+                }
+            },
+            "specialFunction": {
+                "default": {
+                    "down": {
+                        "type": "key",
+                        "index": 1
+                    },
+                    "up": {
+                        "type": "macroToggle",
+                        "indexOn": 23,
+                        "indexOff": 24,
+                        "condition": {
                             "type": "key",
                             "key": 0
-                            // If the Key is not active call indexOn: It is going to show the banner
-                            // If the Key is allready pressed call indexOff: It is going to hide the banner
-                            }
-                        },
-                        "up": {
-                            "type": "macroToggle",
-                            "indexOn": 20,
-                            "indexOff": 21,
-                            "condition": {
-
-                            // Search for the AUX output 5 on the Atem. If selection 16 is active the toggle is on
-                            // If the Toggle is off change the output for the livestream to show the slides of the Pre-Programm
-                            // If the Toggle is on change the output for the livestream to show the livestream output
-                            "type": "aux_selection",
-                            "aux": 5,
-                            "selection": 16
-                            }
                         }
+                    },
+                    "left": {
+                        "type": "macroLoop",
+                        "indexes": [1, 2, 3]
                     }
                 }
             },
-
-            // Selection on thich port of the Atem is which camera connected
             "cameraMap": {
                 "1": 1,
                 "2": 2,
                 "3": 3,
-                "4": 4,
-                "7": 6
+                "4": 4
             }
         }
     ]
+}
+```
+
+### Camera Connections
+
+The `cams` array defines the camera connections that the application can control. Each camera has:
+
+-   `instance`: Unique numeric identifier for the camera
+-   `type`: Type of camera connection. Supported types:
+    -   `"websocket/ptzlanc"`: WebSocket-based PTZ LANC camera control
+    -   `"signalr/ptzlanc"`: SignalR-based PTZ LANC camera control
+
+#### WebSocket PTZ LANC Camera
+
+```json
+{
+    "instance": 1,
+    "type": "websocket/ptzlanc",
+    "ip": "192.168.1.100",
+    "panTiltInvert": false,
+    "showTallyLight": true
+}
+```
+
+-   `ip`: IP address of the camera controller
+-   `panTiltInvert`: (Optional, default: false) Invert pan/tilt controls
+-   `showTallyLight`: (Optional, default: true) Enable tally light on camera
+
+#### SignalR PTZ LANC Camera
+
+```json
+{
+    "instance": 2,
+    "type": "signalr/ptzlanc",
+    "connectionUrl": "http://192.168.1.101:5000",
+    "connectionPort": "COM6",
+    "panTiltInvert": false
+}
+```
+
+-   `connectionUrl`: URL of the SignalR camera controller
+-   `connectionPort`: Serial port identifier
+-   `panTiltInvert`: (Optional, default: false) Invert pan/tilt controls
+
+### Video Mixer Connections
+
+The `videoMixers` array defines the video mixer connections. Multiple video mixers can be configured.
+
+```json
+{
+    "instance": 1,
+    "type": "blackmagicdesign/atem",
+    "ip": "192.168.1.240",
+    "mixEffectBlock": 0
+}
+```
+
+-   `instance`: Unique numeric identifier for the video mixer
+-   `type`: Type of video mixer. Currently supported: `"blackmagicdesign/atem"`
+-   `ip`: IP address of the ATEM switcher
+-   `mixEffectBlock`: Zero-based ME block index to control (0-3 depending on ATEM model)
+
+### Gamepads/Controllers (Interfaces)
+
+The `interfaces` array defines the gamepad/controller configurations. Each gamepad connects to exactly one video mixer and controls the cameras mapped to it.
+
+```json
+{
+    "instance": 1,
+    "type": "logitech/gamepadf310",
+    "serialNumber": "optional-serial-number",
+    "videoMixer": 1,
+    "enableChangingProgram": true,
+    "connectionChange": { /* ... */ },
+    "specialFunction": { /* ... */ },
+    "cameraMap": { /* ... */ }
+}
+```
+
+#### Basic Configuration
+
+-   `instance`: Unique numeric identifier for the interface
+-   `type`: Type of gamepad. Supported types:
+    -   `"logitech/gamepadf310"`: Logitech F310 gamepad
+    -   `"logitech/rumblepad2"`: Logitech Rumblepad 2
+-   `serialNumber`: (Optional) Serial number to identify specific gamepad
+-   `videoMixer`: Instance number of the video mixer this interface controls
+-   `enableChangingProgram`: (Optional, default: true) Allow this controller to cut/switch program output
+
+#### Camera Map
+
+The `cameraMap` maps ATEM input numbers to camera instance numbers:
+
+```json
+"cameraMap": {
+    "1": 1,  // ATEM input 1 -> camera instance 1
+    "2": 2,  // ATEM input 2 -> camera instance 2
+    "3": 3,  // ATEM input 3 -> camera instance 3
+    "4": 4   // ATEM input 4 -> camera instance 4
+}
+```
+
+#### Connection Change Configuration
+
+Defines how the D-pad buttons change camera selection. Two types are supported:
+
+**Direct Mode**: Maps each D-pad direction to a specific camera instance
+
+```json
+"connectionChange": {
+    "type": "direct",
+    "default": {
+        "up": 1,
+        "right": 2,
+        "down": 3,
+        "left": 4
+    },
+    "alt": {  // Optional: used when "alt" modifier is held
+        "up": 5,
+        "right": 6,
+        "down": 7,
+        "left": 8
+    },
+    "altLower": {  // Optional: used when "altLower" modifier is held
+        "up": 9,
+        "right": 10,
+        "down": 11,
+        "left": 12
+    }
+}
+```
+
+**Directional Mode**: Allows navigation between cameras in a directional manner
+
+```json
+"connectionChange": {
+    "type": "directional",
+    "directions": {
+        "1": {  // From camera instance 1
+            "right": 2,
+            "down": 3
+        },
+        "2": {  // From camera instance 2
+            "left": 1,
+            "down": 4
+        }
+    }
+}
+```
+
+#### Special Functions
+
+Maps gamepad buttons (A, B, X, Y) to special functions. Available in `default`, `alt`, and `altLower` contexts.
+
+Button directions: `"up"` (Y), `"down"` (A), `"left"` (X), `"right"` (B)
+
+**Key Toggle**: Toggle an ATEM upstream key
+
+```json
+{
+    "type": "key",
+    "index": 1  // Key index (1-based)
+}
+```
+
+**Macro Loop**: Cycle through a series of macros
+
+```json
+{
+    "type": "macroLoop",
+    "indexes": [1, 2, 3]  // Array of macro indexes to cycle through
+}
+```
+
+**Macro Toggle**: Toggle between two macros based on a condition
+
+```json
+{
+    "type": "macroToggle",
+    "indexOn": 23,   // Macro to run when condition is false
+    "indexOff": 24,  // Macro to run when condition is true
+    "condition": {
+        "type": "key",  // Check if a key is active
+        "key": 0        // Key index to check
+    }
+}
+```
+
+```json
+{
+    "type": "macroToggle",
+    "indexOn": 20,
+    "indexOff": 21,
+    "condition": {
+        "type": "aux_selection",  // Check AUX output selection
+        "aux": 5,                 // AUX output index
+        "selection": 16           // Expected source selection
+    }
+}
+```
+
+**Connection Change**: Trigger camera selection change via button
+
+```json
+{
+    "type": "connectionChange"
+}
 ```
