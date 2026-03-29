@@ -29,8 +29,7 @@ export class ViscaOverIpCamera implements ICameraConnection {
         // Only mark as connected after successful VISCA handshake/ACK or verified command response
         this._camera.on('connected', () => {
             this.log('Connected');
-            // Verify connection with a simple command before marking as truly connected
-            this.verifyConnection();
+            this._connectionSubject.next(true);
         });
 
         this._camera.on('error', (err: unknown) => {
@@ -57,42 +56,7 @@ export class ViscaOverIpCamera implements ICameraConnection {
     }
 
     public async dispose(): Promise<void> {
-        // Close the underlying UDP transport to release OS resources
-        try {
-            // Check if the ViscaCamera has a client property (UDP socket)
-            const camera = this._camera as unknown;
-            if (
-                camera &&
-                typeof camera === 'object' &&
-                'client' in camera &&
-                typeof (camera as { client?: { close?: () => void } }).client?.close === 'function'
-            ) {
-                (camera as { client: { close: () => void } }).client.close();
-            } else if (
-                camera &&
-                typeof camera === 'object' &&
-                'socket' in camera &&
-                typeof (camera as { socket?: { close?: () => void } }).socket?.close === 'function'
-            ) {
-                (camera as { socket: { close: () => void } }).socket.close();
-            } else if (
-                camera &&
-                typeof camera === 'object' &&
-                'transport' in camera &&
-                typeof (camera as { transport?: { close?: () => void } }).transport?.close === 'function'
-            ) {
-                (camera as { transport: { close: () => void } }).transport.close();
-            } else if (
-                camera &&
-                typeof camera === 'object' &&
-                'close' in camera &&
-                typeof (camera as { close?: () => Promise<void> }).close === 'function'
-            ) {
-                await (camera as { close: () => Promise<void> }).close();
-            }
-        } catch (err) {
-            this.logError(`Error closing UDP transport: ${err}`);
-        }
+        this._camera.client.disconnect();
 
         this._connectionSubject.next(false);
     }
@@ -196,37 +160,6 @@ export class ViscaOverIpCamera implements ICameraConnection {
             // Create a custom VISCA command from raw bytes and enqueue it
             this.enqueueCommand('tally', ViscaCommand.fromPacket(payload));
         }
-    }
-
-    private verifyConnection(): void {
-        // Send a simple inquiry command to verify the connection is truly established
-        const verifyCommand = ViscaCommand.cameraInquiry();
-        let verified = false;
-
-        const onAck = () => {
-            if (!verified) {
-                verified = true;
-                this._connectionSubject.next(true);
-            }
-        };
-
-        const onComplete = () => {
-            if (!verified) {
-                verified = true;
-                this._connectionSubject.next(true);
-            }
-        };
-
-        const onError = () => {
-            // Connection verification failed, but keep trying via normal event handlers
-            this.log('Connection verification failed, waiting for successful command');
-        };
-
-        verifyCommand.on('ack', onAck);
-        verifyCommand.on('complete', onComplete);
-        verifyCommand.on('error', onError);
-
-        this._camera.sendCommand(verifyCommand);
     }
 
     private enqueuePanTilt(): void {
