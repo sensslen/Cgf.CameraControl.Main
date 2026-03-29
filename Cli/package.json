@@ -33,6 +33,7 @@
         "atem-connection": "^3.8.1",
         "cgf.cameracontrol.main.core": "file:../Core/dist",
         "cgf.cameracontrol.signalr.ptzlanc.camera": "file:../Signalr.PtzLanc.Camera/dist",
+        "cgf.cameracontrol.viscaoverip.camera": "file:../ViscaOverIp.Camera/dist",
         "cgf.cameracontrol.websocket.ptzlanc.camera": "file:../Websocket.PtzLanc.Camera/dist",
         "everpolate-ts": "^0.0.2",
         "rxjs": "^7.8.1",

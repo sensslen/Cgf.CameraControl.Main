@@ -5,16 +5,18 @@
     "keywords": [
         "Chrischona",
         "Frauenfeld",
+        "Viva Kirche",
         "Camera",
-        "PTZ"
+        "PTZ",
+        "SignalR"
     ],
-    "homepage": "https://github.com/sensslen/Cgf.CameraControl.Main.Core#readme",
+    "homepage": "https://github.com/sensslen/Cgf.CameraControl.Main#readme",
     "bugs": {
-        "url": "https://github.com/sensslen/Cgf.CameraControl.Main.Core/issues"
+        "url": "https://github.com/sensslen/Cgf.CameraControl.Main/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/sensslen/Cgf.CameraControl.Main.Core.git"
+        "url": "git+https://github.com/sensslen/Cgf.CameraControl.Main.git"
     },
     "license": "MIT",
     "author": {
@@ -37,7 +39,7 @@
     },
     "dependencies": {
         "@microsoft/signalr": "^10.0.0",
-        "axios": "^1.7.4",
+        "axios": "^1.14",
         "cgf.cameracontrol.main.core": "file:../Core/dist",
         "rxjs": "^7.8.1",
         "strict-event-emitter-types": "^2.0.0",
@@ -61,6 +63,6 @@
         "shx": "^0.4.0",
         "simple-git": "^3.19.1",
         "sort-package-json": "^3.0.0",
-        "typescript": "^5.5.4"
+        "typescript": "^5"
     }
 }

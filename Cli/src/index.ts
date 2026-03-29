@@ -8,6 +8,7 @@ import { Logger } from './Logger';
 import { PassthroughBuilder } from './VideoMixer/Passthrough/PassthroughBuilder';
 import { Rumblepad2Builder } from './Hmi/Gamepad/logitech/Rumblepad2/Rumblepad2Builder';
 import { SignalrPtzLancCameraBuilder } from 'cgf.cameracontrol.signalr.ptzlanc.camera';
+import { ViscaOverIpCameraBuilder } from 'cgf.cameracontrol.viscaoverip.camera';
 import { WebsocketPtzLancCameraBuilder } from 'cgf.cameracontrol.websocket.ptzlanc.camera';
 import yargs from 'yargs/yargs';
 
@@ -36,6 +37,7 @@ async function run() {
     await core.mixerFactory.builderAdd(new PassthroughBuilder(logger), logger);
     await core.hmiFactory.builderAdd(new Fx10Builder(logger, core.mixerFactory, core.cameraFactory), logger);
     await core.hmiFactory.builderAdd(new Rumblepad2Builder(logger, core.mixerFactory, core.cameraFactory), logger);
+    await core.cameraFactory.builderAdd(new ViscaOverIpCameraBuilder(logger), logger);
 
     await core.bootstrap(logger, config);
 }
