@@ -34,7 +34,7 @@ The configuration file has three main sections: `cams` (camera connections), `vi
         {
             "instance": 2,
             "type": "signalr/ptzlanc",
-            "connectionUrl": "[http://192.168.1.101:5000](http://192.168.1.101:5000)",
+            "connectionUrl": "http://192.168.1.101:5000",
             "connectionPort": "COM6",
             "panTiltInvert": false
         },
@@ -135,7 +135,7 @@ The `cams` array defines the camera connections that the application can control
 ```
 
 - `ip`: IP address of the camera controller
-- ``panTiltInvert: (Optional, default: false) Invert pan/tilt controls
+- `panTiltInvert`: (Optional, default: false) Invert pan/tilt controls
 - `showTallyLight`: (Optional, default: true) Enable tally light on camera
 
 ## SignalR PTZ LANC Camera
@@ -143,7 +143,7 @@ The `cams` array defines the camera connections that the application can control
 {
     "instance": 2,
     "type": "signalr/ptzlanc",
-    "connectionUrl": "[http://192.168.1.101:5000](http://192.168.1.101:5000)",
+    "connectionUrl": "http://192.168.1.101:5000",
     "connectionPort": "COM6",
     "panTiltInvert": false
 }
