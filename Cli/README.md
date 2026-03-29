@@ -1,6 +1,6 @@
-# Cgf.CameraControl.Main.Cli [![CodeFactor](https://www.codefactor.io/repository/github/sensslen/cgf.cameracontrol.main.cli/badge)](https://www.codefactor.io/repository/github/sensslen/cgf.cameracontrol.main.cli)
+# Cgf.CameraControl.Main.Cli
 
-Typescript CLI application that uses a Gamepad to control a Video mixer and multiple cameras.
+TypeScript CLI application that uses a Gamepad to control a Video mixer and multiple cameras.
 
 ## Quick start
 
@@ -22,15 +22,16 @@ For complete configuration documentation, see the [main repository README](../RE
 ### Supported Components
 
 #### Camera Types
-- `websocket/ptzlanc` - WebSocket-based PTZ LANC camera control
-- `signalr/ptzlanc` - SignalR-based PTZ LANC camera control
+- `"websocket/ptzlanc"` - WebSocket-based PTZ LANC camera control
+- `"signalr/ptzlanc"` - SignalR-based PTZ LANC camera control
+- `"viscaoverip"` - VISCA over IP camera control
 
 #### Video Mixer Types
-- `blackmagicdesign/atem` - Blackmagic Design ATEM switchers
+- `"blackmagicdesign/atem"` - Blackmagic Design ATEM switchers
 
 #### Interface/Gamepad Types
-- `logitech/gamepadf310` - Logitech F310 gamepad
-- `logitech/rumblepad2` - Logitech Rumblepad 2
+- `"logitech/gamepadf310"` - Logitech F310 gamepad
+- `"logitech/rumblepad2"` - Logitech Rumblepad 2
 
 ### Quick Configuration Example
 

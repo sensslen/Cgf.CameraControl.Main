@@ -21,12 +21,12 @@
   "author": "Simon Ensslen",
   "main": "Cli/dist/index.js",
   "scripts": {
-    "build": "pushd Core && npm run build && popd && pushd Signalr.PtzLanc.Camera && npm run build && popd && pushd Websocket.PtzLanc.Camera && npm run build && popd && pushd ViscaOverIp.Camera && npm run build && popd && pushd Cli && npm run build && popd",
-    "clean": "pushd Core && npm run clean && popd && pushd Signalr.PtzLanc.Camera && npm run clean && popd && pushd Websocket.PtzLanc.Camera && npm run clean && popd && pushd ViscaOverIp.Camera && npm run clean && popd && pushd Cli && npm run clean && popd",
-    "install": "pushd Core && npm i && popd && pushd Signalr.PtzLanc.Camera && npm i && popd && pushd Websocket.PtzLanc.Camera && npm i && popd && pushd ViscaOverIp.Camera && npm i && popd && pushd Cli && npm i && popd",
+    "build": "cd Core && npm run build && cd ../Signalr.PtzLanc.Camera && npm run build && cd ../Websocket.PtzLanc.Camera && npm run build && cd ../ViscaOverIp.Camera && npm run build && cd ../Cli && npm run build",
+    "clean": "cd Core && npm run clean && cd ../Signalr.PtzLanc.Camera && npm run clean && cd ../Websocket.PtzLanc.Camera && npm run clean && cd ../ViscaOverIp.Camera && npm run clean && cd ../Cli && npm run clean",
+    "install": "cd Core && npm i && cd ../Signalr.PtzLanc.Camera && npm i && cd ../Websocket.PtzLanc.Camera && npm i && cd ../ViscaOverIp.Camera && npm i && cd ../Cli && npm i",
     "postinstall": "sort-package-json",
-    "lint": "pushd Core && npm run lint && popd && pushd Signalr.PtzLanc.Camera && npm run lint && popd && pushd Websocket.PtzLanc.Camera && npm run lint && popd && pushd ViscaOverIp.Camera && npm run lint && popd && pushd Cli && npm run lint && popd",
-    "lint-fix": "pushd Core && npm run lint-fix && popd && pushd Signalr.PtzLanc.Camera && npm run lint-fix && popd && pushd Websocket.PtzLanc.Camera && npm run lint-fix && popd && pushd ViscaOverIp.Camera && npm run lint-fix && popd && pushd Cli && npm run lint-fix && popd",
+    "lint": "cd Core && npm run lint && cd ../Signalr.PtzLanc.Camera && npm run lint && cd ../Websocket.PtzLanc.Camera && npm run lint && cd ../ViscaOverIp.Camera && npm run lint && cd ../Cli && npm run lint",
+    "lint-fix": "cd Core && npm run lint-fix && cd ../Signalr.PtzLanc.Camera && npm run lint-fix && cd ../Websocket.PtzLanc.Camera && npm run lint-fix && cd ../ViscaOverIp.Camera && npm run lint-fix && cd ../Cli && npm run lint-fix",
     "prestart": "npm run build",
     "start": "node Cli/dist/index.js"
   },

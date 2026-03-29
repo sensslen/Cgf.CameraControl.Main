@@ -4,7 +4,7 @@ WebSocket-based PTZ LANC camera control module for the Cgf.CameraControl.Main sy
 
 ## Overview
 
-This module provides a WebSocket connection implementation for controlling PTZ (Pan-Tilt-Zoom) LANC cameras. It allows the camera control system to communicate with camera controllers via WebSocket protocol for real-time, low-latency control.
+This module provides a WebSocket connection implementation for controlling PTZ (Pan-Tilt-Zoom) LANC cameras. It allows the camera control system to communicate with camera controllers via the WebSocket real-time communication protocol.
 
 ## Configuration
 
@@ -24,15 +24,6 @@ This module is configured as part of the `cams` array in the main configuration 
 
 - `instance`: Unique numeric identifier for this camera
 - `type`: Must be `"websocket/ptzlanc"`
-- `ip`: IP address of the camera controller
+- `ip`: IP address of the WebSocket camera controller server
 - `panTiltInvert`: (Optional, default: false) Invert pan/tilt control directions
-- `showTallyLight`: (Optional, default: true) Enable tally light on camera when it's on program/preview
-
-## Features
-
-- Real-time camera control via WebSocket
-- Pan and tilt control
-- Zoom control
-- Tally light support (preview/program indication)
-- Configurable pan/tilt inversion
-- Low-latency communication
+- `showTallyLight`: (Optional, default: true) Enable tally light on camera

@@ -1,6 +1,6 @@
 # Cgf.CameraControl.Main.Core [![CodeFactor](https://www.codefactor.io/repository/github/sensslen/cgf.cameracontrol.main.core/badge)](https://www.codefactor.io/repository/github/sensslen/cgf.cameracontrol.main.core)
 
-Core Library of the Camera Control Software initially developed for usage at Chrischona Frauenfeld.
+Core Library of the Camera Control Software initially developed for usage at Viva Kirche Frauenfeld.
 
 ## Overview
 
@@ -17,7 +17,7 @@ This is the core library that provides the foundational interfaces and abstracti
 
 This library is used as a dependency by other modules in the Cgf.CameraControl.Main ecosystem:
 - CLI application (Cgf.CameraControl.Main.Cli)
-- Camera connection modules (SignalR and WebSocket implementations)
+- Camera connection modules (SignalR, WebSocket, and VISCA implementations)
 
 ## Configuration Schema
 
