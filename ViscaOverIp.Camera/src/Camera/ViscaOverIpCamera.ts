@@ -98,19 +98,16 @@ export class ViscaOverIpCamera implements ICameraConnection {
     }
 
     public pan(value: number): void {
-        // value is between -1 and 1
         this._currentPan = this.config.panTiltInvert ? -value : value;
         this.enqueuePanTilt();
     }
 
     public tilt(value: number): void {
-        // value is between -1 and 1
         this._currentTilt = this.config.panTiltInvert ? -value : value;
         this.enqueuePanTilt();
     }
 
     public zoom(value: number): void {
-        // Scale [-1, 1] to a VISCA speed of 0 to 7
         const speed = Math.round(Math.abs(value) * 7);
         let command: ViscaCommand;
 
@@ -126,7 +123,6 @@ export class ViscaOverIpCamera implements ICameraConnection {
     }
 
     public focus(value: number): void {
-        // Scale [-1, 1] to a VISCA speed of 0 to 7
         const speed = Math.round(Math.abs(value) * 7);
         let command: ViscaCommand;
 
@@ -142,8 +138,64 @@ export class ViscaOverIpCamera implements ICameraConnection {
     }
 
     public tallyState(value: 'off' | 'preview' | 'program'): void {
-        // Tally commands are often vendor-specific in VISCA.
-        this.log(`Tally state set to ${value}`);
+        const mode = this.config.tallyMode || 'none';
+
+        if (mode === 'none') {
+            this.log(`Tally state changed to ${value}, but tallyMode is 'none'`);
+            return;
+        }
+
+        let payload: number[] | null = null;
+
+        // Construct vendor-specific raw VISCA payloads
+        switch (mode) {
+            case 'sony-lumens':
+                switch (value) {
+                    case 'program':
+                        payload = [0x81, 0x01, 0x7e, 0x01, 0x0a, 0x00, 0x02, 0xff]; // Red
+                        break;
+                    case 'preview':
+                        payload = [0x81, 0x01, 0x7e, 0x01, 0x0a, 0x00, 0x01, 0xff]; // Green
+                        break;
+                    case 'off':
+                        payload = [0x81, 0x01, 0x7e, 0x01, 0x0a, 0x00, 0x00, 0xff]; // Off
+                        break;
+                }
+                break;
+
+            case 'avonic':
+                switch (value) {
+                    case 'program':
+                        payload = [0x81, 0x01, 0x7e, 0x01, 0x0a, 0x00, 0x02, 0x03, 0xff]; // Red
+                        break;
+                    case 'preview':
+                        payload = [0x81, 0x01, 0x7e, 0x01, 0x0a, 0x00, 0x03, 0x02, 0xff]; // Green
+                        break;
+                    case 'off':
+                        payload = [0x81, 0x01, 0x7e, 0x01, 0x0a, 0x00, 0x03, 0x03, 0xff]; // Off
+                        break;
+                }
+                break;
+
+            case 'ptzoptics':
+                switch (value) {
+                    case 'program':
+                        payload = [0x81, 0x0a, 0x02, 0x02, 0x02, 0xff]; // On
+                        break;
+                    case 'preview':
+                    case 'off':
+                        payload = [0x81, 0x0a, 0x02, 0x02, 0x03, 0xff]; // Off
+                        break;
+                }
+                break;
+        }
+
+        if (payload) {
+            this.log(`Tally state set to ${value} (Mode: ${mode})`);
+
+            // Create a custom VISCA command from raw bytes and enqueue it
+            this.enqueueCommand('tally', ViscaCommand.fromPacket(payload));
+        }
     }
 
     private verifyConnection(): void {
@@ -178,19 +230,15 @@ export class ViscaOverIpCamera implements ICameraConnection {
     }
 
     private enqueuePanTilt(): void {
-        // 1. Calculate raw speeds
         const rawPanSpeed = Math.min(Math.round(Math.abs(this._currentPan) * 24), 24);
         const rawTiltSpeed = Math.min(Math.round(Math.abs(this._currentTilt) * 20), 20);
 
-        // 2. Determine the modes (xMode: 1=Left, 2=Right, 3=Stop | yMode: 1=Up, 2=Down, 3=Stop)
         const panMode = rawPanSpeed === 0 ? 3 : this._currentPan > 0 ? 2 : 1;
         const tiltMode = rawTiltSpeed === 0 ? 3 : this._currentTilt > 0 ? 1 : 2;
 
-        // 3. Apply the VISCA quirk: Speed bytes must be >= 1, even during a Stop (Mode 3) command
         const finalPanSpeed = rawPanSpeed === 0 ? 1 : rawPanSpeed;
         const finalTiltSpeed = rawTiltSpeed === 0 ? 1 : rawTiltSpeed;
 
-        // 4. Build and enqueue the command
         const command = ViscaCommand.cameraPanTilt(finalPanSpeed, finalTiltSpeed, panMode, tiltMode);
         this.enqueueCommand('panTilt', command);
     }
@@ -215,11 +263,8 @@ export class ViscaOverIpCamera implements ICameraConnection {
 
         const [category, command] = nextEntry;
 
-        // Remove it from the pending queue so we don't send it again
         this._commandQueue.delete(category);
 
-        // Since ViscaCommand doesn't support .once() or removing listeners,
-        // we use a flag to ensure we only release the queue lock once per command.
         let handled = false;
 
         const releaseAndNext = () => {
@@ -231,7 +276,6 @@ export class ViscaOverIpCamera implements ICameraConnection {
             this.processQueue();
         };
 
-        // Use the explicitly supported .on() method
         command.on('ack', () => releaseAndNext());
 
         command.on('complete', () => releaseAndNext());
