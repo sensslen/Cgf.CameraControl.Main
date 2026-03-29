@@ -161,7 +161,7 @@ For detailed module documentation, see:
 -   `connectionPort`: Serial port identifier
 -   `panTiltInvert`: (Optional, default: false) Invert pan/tilt controls
 
-#### VISCA over IP Camera
+#### VISCA over IP Camera (untested)
 
 ```json
 {
