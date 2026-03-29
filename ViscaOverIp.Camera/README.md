@@ -1,4 +1,4 @@
-# Cgf.CameraControl.ViscaOverIp.Camera
+# Cgf.CameraControl.ViscaOverIp.Camera (currently untested)
 
 VISCA over IP camera control module for the Cgf.CameraControl.Main system.
 
