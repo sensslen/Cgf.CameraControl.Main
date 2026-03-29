@@ -1,6 +1,6 @@
 # Cgf.CameraControl.Main
 
-Typescript application that uses a Gamepad to control a Video mixer and multiple cameras.
+TypeScript application that uses a Gamepad to control a Video mixer and multiple cameras.
 
 ## Quick start
 
@@ -11,7 +11,7 @@ To start using this project use the following steps:
 -   install dependencies by calling `npm install`
 -   edit [Cli/src/config.json](./Cli/src/config.json) to match your setup or just create a new configuration and run the application with the config parameter.
 -   compile the app : `npm run build`
--   run the application using `npm start` or `node Cli/dist/index.js --config path/to/my/config.json`
+-   run the application using `npm start` (which runs `node Cli/dist/index.js`) or pass a custom config via `node Cli/dist/index.js --config path/to/my/config.json`
 
 ## Configuration
 
@@ -36,6 +36,13 @@ The configuration file has three main sections: `cams` (camera connections), `vi
             "type": "signalr/ptzlanc",
             "connectionUrl": "http://192.168.1.101:5000",
             "connectionPort": "COM6",
+            "panTiltInvert": false
+        },
+        {
+            "instance": 3,
+            "type": "viscaoverip",
+            "ip": "192.168.1.102",
+            "port": 52381,
             "panTiltInvert": false
         }
     ],
@@ -115,6 +122,12 @@ The `cams` array defines the camera connections that the application can control
 -   `type`: Type of camera connection. Supported types:
     -   `"websocket/ptzlanc"`: WebSocket-based PTZ LANC camera control
     -   `"signalr/ptzlanc"`: SignalR-based PTZ LANC camera control
+    -   `"viscaoverip"`: VISCA over IP camera control
+
+For detailed module documentation, see:
+- [Websocket.PtzLanc.Camera](./Websocket.PtzLanc.Camera/README.md)
+- [Signalr.PtzLanc.Camera](./Signalr.PtzLanc.Camera/README.md)
+- [ViscaOverIp.Camera](./ViscaOverIp.Camera/README.md)
 
 #### WebSocket PTZ LANC Camera
 
@@ -148,7 +161,23 @@ The `cams` array defines the camera connections that the application can control
 -   `connectionPort`: Serial port identifier
 -   `panTiltInvert`: (Optional, default: false) Invert pan/tilt controls
 
-### Video Mixer Connections
+#### VISCA over IP Camera
+
+```json
+{
+    "instance": 3,
+    "type": "viscaoverip",
+    "ip": "192.168.1.102",
+    "port": 52381,
+    "panTiltInvert": false
+}
+```
+
+-   `ip`: IP address of the camera
+-   `port`: (Optional, default: 52381) UDP port of the camera
+-   `panTiltInvert`: (Optional, default: false) Invert pan/tilt controls
+
+## Video Mixer Connections
 
 The `videoMixers` array defines the video mixer connections. Multiple video mixers can be configured.
 
@@ -166,7 +195,7 @@ The `videoMixers` array defines the video mixer connections. Multiple video mixe
 -   `ip`: IP address of the ATEM switcher
 -   `mixEffectBlock`: Zero-based ME block index to control (0-3 depending on ATEM model)
 
-### Gamepads/Controllers (Interfaces)
+## Gamepads/Controllers (Interfaces)
 
 The `interfaces` array defines the gamepad/controller configurations. Each gamepad connects to exactly one video mixer and controls the cameras mapped to it.
 

@@ -1,4 +1,4 @@
-# Cgf.CameraControl.Signalr.PtzLanc.Camera
+# Cgf.CameraControl.SignalR.PtzLanc.Camera
 
 SignalR-based PTZ LANC camera control module for the Cgf.CameraControl.Main system.
 
