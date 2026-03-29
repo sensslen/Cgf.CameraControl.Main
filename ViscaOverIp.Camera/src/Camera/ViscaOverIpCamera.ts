@@ -1,12 +1,19 @@
-import * as dgram from 'dgram';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ICameraConnection, ILogger } from 'cgf.cameracontrol.main.core';
+import { ViscaCamera, ViscaCommand } from 'node-visca-over-ip';
 import { IViscaOverIpCameraConfiguration } from './IViscaOverIpCameraConfiguration';
+import { ViscaCommandFactory } from './ViscaCommandFactory';
+
+// Define the available command categories for deduplication
+type CommandCategory = 'panTilt' | 'zoom' | 'focus' | 'tally';
 
 export class ViscaOverIpCamera implements ICameraConnection {
     private readonly _connectionSubject = new BehaviorSubject<boolean>(false);
-    private readonly _socket: dgram.Socket;
-    private _sequenceNumber = 1;
+    private readonly _camera: ViscaCamera;
+
+    // The Map naturally deduplicates commands by category while preserving execution order
+    private _commandQueue: Map<CommandCategory, ViscaCommand> = new Map();
+    private _isSending = false;
 
     private _currentPan = 0;
     private _currentTilt = 0;
@@ -15,20 +22,28 @@ export class ViscaOverIpCamera implements ICameraConnection {
         private config: IViscaOverIpCameraConfiguration,
         private logger: ILogger
     ) {
-        this._socket = dgram.createSocket('udp4');
+        this._camera = new ViscaCamera(this.config.ip, this.config.port || 52381);
 
-        this._socket.on('error', (err) => {
-            this.logError(`Error: ${err}`);
-            this._socket.close();
-            this._connectionSubject.next(false);
+        this._camera.on('connected', () => {
+            this.log('Connected');
+            this._connectionSubject.next(true);
         });
 
-        this._socket.on('close', () => {
+        // FIX: Changed 'any' to 'unknown' to satisfy ESLint
+        this._camera.on('error', (err: unknown) => {
+            this.logError(`Camera Error: ${err}`);
+            this._connectionSubject.next(false);
+
+            // Clear the queue entirely on a connection error
+            this._commandQueue.clear();
+            this._isSending = false;
+        });
+
+        this._camera.on('closed', () => {
             this.log('Closed');
             this._connectionSubject.next(false);
         });
 
-        // UDP is connectionless; assume connected upon creation
         this._connectionSubject.next(true);
     }
 
@@ -41,87 +56,97 @@ export class ViscaOverIpCamera implements ICameraConnection {
     }
 
     public async dispose(): Promise<void> {
-        this._socket.close();
+        // Safe check in case the library changes or doesn't expose disconnect
+        if (
+            'disconnect' in this._camera &&
+            typeof (this._camera as { disconnect?: () => void }).disconnect === 'function'
+        ) {
+            (this._camera as { disconnect: () => void }).disconnect();
+        }
+        this._connectionSubject.next(false);
     }
 
     public pan(value: number): void {
         this._currentPan = this.config.panTiltInvert ? -value : value;
-        this.sendPanTilt();
+        this.enqueuePanTilt();
     }
 
     public tilt(value: number): void {
         this._currentTilt = this.config.panTiltInvert ? -value : value;
-        this.sendPanTilt();
+        this.enqueuePanTilt();
     }
 
     public zoom(value: number): void {
-        let command: Buffer;
-        if (value === 0) {
-            command = Buffer.from([0x81, 0x01, 0x04, 0x07, 0x00, 0xff]); // Stop
-        } else {
-            const speed = Math.min(7, Math.max(0, Math.round(Math.abs(value) * 7)));
-            const direction = value > 0 ? 0x20 : 0x30; // 2=Tele(in), 3=Wide(out)
-            command = Buffer.from([0x81, 0x01, 0x04, 0x07, direction | speed, 0xff]);
-        }
-        this.sendViscaCommand(command);
+        this.enqueueCommand('zoom', ViscaCommandFactory.zoom(value));
     }
 
     public focus(value: number): void {
-        let command: Buffer;
-        if (value === 0) {
-            command = Buffer.from([0x81, 0x01, 0x04, 0x08, 0x00, 0xff]); // Stop
-        } else {
-            const speed = Math.min(7, Math.max(0, Math.round(Math.abs(value) * 7)));
-            const direction = value > 0 ? 0x20 : 0x30; // 2=Far, 3=Near
-            command = Buffer.from([0x81, 0x01, 0x04, 0x08, direction | speed, 0xff]);
-        }
-        this.sendViscaCommand(command);
+        this.enqueueCommand('focus', ViscaCommandFactory.focus(value));
     }
 
     public tallyState(value: 'off' | 'preview' | 'program'): void {
-        // Tally commands are often vendor-specific in VISCA.
-        this.log(`Tally state set to ${value}`);
+        this.enqueueCommand('tally', ViscaCommandFactory.tally(value));
     }
 
-    private sendPanTilt() {
-        const panSpeed = Math.min(24, Math.max(1, Math.round(Math.abs(this._currentPan) * 24)));
-        const tiltSpeed = Math.min(20, Math.max(1, Math.round(Math.abs(this._currentTilt) * 20)));
-
-        let panDir = 0x03; // Stop
-        if (this._currentPan > 0)
-            panDir = 0x02; // Right
-        else if (this._currentPan < 0) panDir = 0x01; // Left
-
-        let tiltDir = 0x03; // Stop
-        if (this._currentTilt > 0)
-            tiltDir = 0x01; // Up
-        else if (this._currentTilt < 0) tiltDir = 0x02; // Down
-
-        const command = Buffer.from([0x81, 0x01, 0x06, 0x01, panSpeed, tiltSpeed, panDir, tiltDir, 0xff]);
-
-        this.sendViscaCommand(command);
+    private enqueuePanTilt(): void {
+        const command = ViscaCommandFactory.panTilt(this._currentPan, this._currentTilt);
+        // By using 'panTilt' as the key, rapid joystick updates will continually overwrite
+        // the pending command rather than growing the queue.
+        this.enqueueCommand('panTilt', command);
     }
 
-    private sendViscaCommand(payload: Buffer) {
-        if (!this._connectionSubject.value) return;
+    private enqueueCommand(category: CommandCategory, command: ViscaCommand): void {
+        // Set or overwrite the command for this category
+        this._commandQueue.set(category, command);
+        this.processQueue();
+    }
 
-        const header = Buffer.alloc(8);
-        header.writeUInt16BE(0x0100, 0); // Payload type (VISCA command)
-        header.writeUInt16BE(payload.length, 2); // Payload length
-        header.writeUInt32BE(this._sequenceNumber++, 4); // Sequence number
+    private processQueue(): void {
+        // Only proceed if we aren't currently waiting on an ACK, have items to send, and are connected
+        if (this._isSending || this._commandQueue.size === 0 || !this._connectionSubject.value) {
+            return;
+        }
 
-        const packet = Buffer.concat([header, payload]);
+        this._isSending = true;
 
-        this._socket.send(packet, this.config.port || 52381, this.config.ip, (err) => {
-            if (err) this.logError(`Failed to send command: ${err}`);
+        // FIX: Extract the item safely to prevent TypeScript destructuring errors
+        const nextEntry = this._commandQueue.entries().next().value;
+        if (!nextEntry) {
+            this._isSending = false;
+            return;
+        }
+
+        const [category, command] = nextEntry;
+
+        // Remove it from the pending queue so we don't send it again
+        this._commandQueue.delete(category);
+
+        // Define a helper to release the lock and trigger the next command
+        const releaseAndNext = () => {
+            this._isSending = false;
+            command.removeAllListeners('ack');
+            command.removeAllListeners('error');
+            this.processQueue();
+        };
+
+        // Listen for acknowledgment that the camera accepted the command
+        command.once('ack', () => releaseAndNext());
+
+        // FIX: Changed 'any' to 'unknown' to satisfy ESLint
+        command.once('error', (err: unknown) => {
+            this.logError(`Command Error (${category}): ${err}`);
+            releaseAndNext();
         });
+
+        // Ship it
+        this._camera.sendCommand(command);
     }
 
-    private log(toLog: string) {
+    private log(toLog: string): void {
         this.logger.log(`ViscaOverIpCamera(${this.config.ip}): ${toLog}`);
     }
 
-    private logError(toLog: string) {
+    private logError(toLog: string): void {
         this.logger.error(`ViscaOverIpCamera(${this.config.ip}): ${toLog}`);
     }
 }
