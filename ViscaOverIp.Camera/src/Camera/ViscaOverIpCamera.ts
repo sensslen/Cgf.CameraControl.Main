@@ -13,6 +13,7 @@ export class ViscaOverIpCamera implements ICameraConnection {
     // The Map naturally deduplicates commands by category while preserving execution order
     private _commandQueue: Map<CommandCategory, ViscaCommand> = new Map();
     private _isSending = false;
+    private _disposed = false;
 
     private _currentPan = 0;
     private _currentTilt = 0;
@@ -30,6 +31,7 @@ export class ViscaOverIpCamera implements ICameraConnection {
         this._camera.on('connected', () => {
             this.log('Connected');
             this._connectionSubject.next(true);
+            this.processQueue();
         });
 
         this._camera.on('error', (err: unknown) => {
@@ -39,11 +41,17 @@ export class ViscaOverIpCamera implements ICameraConnection {
             // Clear the queue entirely on a connection error
             this._commandQueue.clear();
             this._isSending = false;
+            if (!this._disposed) {
+                this._camera.reconnect();
+            }
         });
 
         this._camera.on('closed', () => {
             this.log('Closed');
             this._connectionSubject.next(false);
+            if (!this._disposed) {
+                this._camera.reconnect();
+            }
         });
     }
 
@@ -56,8 +64,8 @@ export class ViscaOverIpCamera implements ICameraConnection {
     }
 
     public async dispose(): Promise<void> {
+        this._disposed = true;
         this._camera.client.disconnect();
-
         this._connectionSubject.next(false);
     }
 
