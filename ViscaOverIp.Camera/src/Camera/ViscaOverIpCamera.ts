@@ -17,15 +17,20 @@ export class ViscaOverIpCamera implements ICameraConnection {
     private _currentPan = 0;
     private _currentTilt = 0;
 
+    // Command timeout in milliseconds (configurable safety timeout)
+    private readonly _commandTimeout = 5000;
+
     constructor(
         private config: IViscaOverIpCameraConfiguration,
         private logger: ILogger
     ) {
         this._camera = new ViscaCamera(this.config.ip, this.config.port || 52381);
 
+        // Only mark as connected after successful VISCA handshake/ACK or verified command response
         this._camera.on('connected', () => {
             this.log('Connected');
-            this._connectionSubject.next(true);
+            // Verify connection with a simple command before marking as truly connected
+            this.verifyConnection();
         });
 
         this._camera.on('error', (err: unknown) => {
@@ -52,6 +57,43 @@ export class ViscaOverIpCamera implements ICameraConnection {
     }
 
     public async dispose(): Promise<void> {
+        // Close the underlying UDP transport to release OS resources
+        try {
+            // Check if the ViscaCamera has a client property (UDP socket)
+            const camera = this._camera as unknown;
+            if (
+                camera &&
+                typeof camera === 'object' &&
+                'client' in camera &&
+                typeof (camera as { client?: { close?: () => void } }).client?.close === 'function'
+            ) {
+                (camera as { client: { close: () => void } }).client.close();
+            } else if (
+                camera &&
+                typeof camera === 'object' &&
+                'socket' in camera &&
+                typeof (camera as { socket?: { close?: () => void } }).socket?.close === 'function'
+            ) {
+                (camera as { socket: { close: () => void } }).socket.close();
+            } else if (
+                camera &&
+                typeof camera === 'object' &&
+                'transport' in camera &&
+                typeof (camera as { transport?: { close?: () => void } }).transport?.close === 'function'
+            ) {
+                (camera as { transport: { close: () => void } }).transport.close();
+            } else if (
+                camera &&
+                typeof camera === 'object' &&
+                'close' in camera &&
+                typeof (camera as { close?: () => Promise<void> }).close === 'function'
+            ) {
+                await (camera as { close: () => Promise<void> }).close();
+            }
+        } catch (err) {
+            this.logError(`Error closing UDP transport: ${err}`);
+        }
+
         this._connectionSubject.next(false);
     }
 
@@ -104,6 +146,37 @@ export class ViscaOverIpCamera implements ICameraConnection {
         this.log(`Tally state set to ${value}`);
     }
 
+    private verifyConnection(): void {
+        // Send a simple inquiry command to verify the connection is truly established
+        const verifyCommand = ViscaCommand.cameraInquiry();
+        let verified = false;
+
+        const onAck = () => {
+            if (!verified) {
+                verified = true;
+                this._connectionSubject.next(true);
+            }
+        };
+
+        const onComplete = () => {
+            if (!verified) {
+                verified = true;
+                this._connectionSubject.next(true);
+            }
+        };
+
+        const onError = () => {
+            // Connection verification failed, but keep trying via normal event handlers
+            this.log('Connection verification failed, waiting for successful command');
+        };
+
+        verifyCommand.on('ack', onAck);
+        verifyCommand.on('complete', onComplete);
+        verifyCommand.on('error', onError);
+
+        this._camera.sendCommand(verifyCommand);
+    }
+
     private enqueuePanTilt(): void {
         // 1. Calculate raw speeds
         const rawPanSpeed = Math.min(Math.round(Math.abs(this._currentPan) * 24), 24);
@@ -152,6 +225,8 @@ export class ViscaOverIpCamera implements ICameraConnection {
         const releaseAndNext = () => {
             if (handled) return;
             handled = true;
+            // Clear the safety timeout
+            clearTimeout(timeoutHandle);
             this._isSending = false;
             this.processQueue();
         };
@@ -159,10 +234,20 @@ export class ViscaOverIpCamera implements ICameraConnection {
         // Use the explicitly supported .on() method
         command.on('ack', () => releaseAndNext());
 
+        command.on('complete', () => releaseAndNext());
+
         command.on('error', (err: unknown) => {
             this.logError(`Command Error (${category}): ${err}`);
             releaseAndNext();
         });
+
+        // Safety timeout to prevent hanging
+        const timeoutHandle = setTimeout(() => {
+            if (!handled) {
+                this.logError(`Command timeout (${category}) after ${this._commandTimeout}ms`);
+                releaseAndNext();
+            }
+        }, this._commandTimeout);
 
         // Ship it
         this._camera.sendCommand(command);
