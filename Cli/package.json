@@ -18,7 +18,6 @@
     "author": "Simon Ensslen",
     "main": "index.js",
     "scripts": {
-        "atem-config-schema": "ts-json-schema-generator --path \"./src/**/*.ts\" --type IAtemConfig -o src/VideoMixer/Blackmagicdesign/IAtemConfig.json --tsconfig ./tsconfig.json --additional-properties true",
         "build": "npm run clean && npm run lint && tsc",
         "clean": "shx rm -rf dist",
         "postinstall": "sort-package-json",
@@ -43,20 +42,17 @@
         "zod-validation-error": "^5.0.0"
     },
     "devDependencies": {
-        "@eslint/eslintrc": "^3.2.0",
-        "@eslint/js": "^9",
+        "@eslint/js": "^10",
         "@types/node": "^25",
         "@types/yargs": "^17.0.33",
-        "@typescript-eslint/eslint-plugin": "^8",
-        "@typescript-eslint/parser": "^8",
-        "eslint": "^9",
+        "eslint": "^10",
         "eslint-config-prettier": "^10.1.2",
-        "eslint-plugin-import": "^2.28.1",
         "eslint-plugin-prettier": "^5.2.1",
         "globals": "^17.0.0",
         "prettier": "^3.0.3",
         "shx": "^0.4.0",
-        "sort-package-json": "^3.0.0",
-        "typescript": "^5.5.4"
+        "sort-package-json": "^3",
+        "typescript": "^6",
+        "typescript-eslint": "^8"
     }
 }
