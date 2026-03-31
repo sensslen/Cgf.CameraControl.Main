@@ -8,13 +8,16 @@
         "Camera",
         "PTZ"
     ],
-    "homepage": "https://github.com/sensslen/Cgf.CameraControl.Main.Core#readme",
+    "homepage": "https://github.com/sensslen/Cgf.CameraControl.Main#readme",
     "bugs": {
-        "url": "https://github.com/sensslen/Cgf.CameraControl.Main.Core/issues"
+        "url": "https://github.com/sensslen/Cgf.CameraControl.Main/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/sensslen/Cgf.CameraControl.Main.Core.git"
+        "url": "git+https://github.com/sensslen/Cgf.CameraControl.Main.git"
+    },
+    "engines": {
+        "node": ">=22"
     },
     "license": "MIT",
     "author": {

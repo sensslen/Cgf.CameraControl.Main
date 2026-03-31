@@ -16,6 +16,9 @@
     "type": "git",
     "url": "git+https://github.com/sensslen/Cgf.CameraControl.Main.git"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "license": "MIT",
   "author": {
     "name": "Simon Ensslen",
