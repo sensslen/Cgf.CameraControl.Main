@@ -1,16 +1,15 @@
+import * as httpModule from 'node:http';
+import * as httpsModule from 'node:https';
 import * as signalR from '@microsoft/signalr';
 
 import { BehaviorSubject, Observable } from 'rxjs';
-import axios, { AxiosInstance } from 'axios';
 
-import { Agent as HttpsAgent } from 'https';
 import { ICameraConnection } from 'cgf.cameracontrol.main.core';
 import { ILogger } from 'cgf.cameracontrol.main.core';
 import { ISignalrPtzLancCameraConfiguration } from './ISignalrPtzLancCameraConfiguration';
 import { SignalrPtzLancCameraState } from './SignalrPtzLancCameraState';
 
 export class SignalrPtzLancCamera implements ICameraConnection {
-    private readonly _axios: AxiosInstance;
     private readonly _socketConnection: signalR.HubConnection;
     private readonly _currentState = new SignalrPtzLancCameraState();
     private _shouldTransmitState = false;
@@ -21,12 +20,6 @@ export class SignalrPtzLancCamera implements ICameraConnection {
         private config: ISignalrPtzLancCameraConfiguration,
         private logger: ILogger
     ) {
-        this._axios = axios.create({
-            httpsAgent: new HttpsAgent({
-                rejectUnauthorized: false,
-            }),
-        });
-
         this._socketConnection = new signalR.HubConnectionBuilder()
             .withAutomaticReconnect()
             .withUrl(`${this.config.connectionUrl}/statehub`)
@@ -95,10 +88,10 @@ export class SignalrPtzLancCamera implements ICameraConnection {
 
     private async setupRemote() {
         try {
-            const response = await this._axios.get(this.config.connectionUrl + '/connections');
+            const data = await this.httpRequest<string[]>(this.config.connectionUrl + '/connections', 'GET');
 
-            if (!response.data.includes(this.config.connectionPort)) {
-                this.logError(`Port:${this.config.connectionPort} is not available. Available Ports:${response.data}`);
+            if (!data.includes(this.config.connectionPort)) {
+                this.logError(`Port:${this.config.connectionPort} is not available. Available Ports:${data}`);
                 this.logError('Stopping camera.');
                 this.dispose();
             }
@@ -112,12 +105,53 @@ export class SignalrPtzLancCamera implements ICameraConnection {
             connected: true,
         };
         try {
-            await this._axios.put(`${this.config.connectionUrl}/connection`, connection);
+            await this.httpRequest(`${this.config.connectionUrl}/connection`, 'PUT', connection);
         } catch (error) {
             this.logError(`Failed to connect to Port:${this.config.connectionPort} with error:${error}`);
             this.logError('Stopping camera.');
             this.dispose();
         }
+    }
+
+    private httpRequest<T = void>(url: string, method: 'GET' | 'PUT', body?: unknown): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            const urlObj = new URL(url);
+            const isHttps = urlObj.protocol === 'https:';
+            const bodyStr = body !== undefined ? JSON.stringify(body) : undefined;
+            const headers: httpModule.OutgoingHttpHeaders = bodyStr
+                ? {
+                      ['Content-Length']: Buffer.byteLength(bodyStr),
+                      ['Content-Type']: 'application/json',
+                  }
+                : {};
+            const options: httpsModule.RequestOptions = {
+                hostname: urlObj.hostname,
+                port: urlObj.port || (isHttps ? 443 : 80),
+                path: urlObj.pathname + urlObj.search,
+                method,
+                rejectUnauthorized: false,
+                headers,
+            };
+            const lib = isHttps ? httpsModule : httpModule;
+            const req = lib.request(options, (res) => {
+                let rawData = '';
+                res.on('data', (chunk: Buffer) => {
+                    rawData += chunk.toString();
+                });
+                res.on('end', () => {
+                    if (res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300) {
+                        resolve(rawData ? (JSON.parse(rawData) as T) : (undefined as T));
+                    } else {
+                        reject(new Error(`HTTP ${res.statusCode} ${method} ${url}`));
+                    }
+                });
+            });
+            req.on('error', reject);
+            if (bodyStr) {
+                req.write(bodyStr);
+            }
+            req.end();
+        });
     }
 
     private async connectionSuccessfullyEstablished() {
