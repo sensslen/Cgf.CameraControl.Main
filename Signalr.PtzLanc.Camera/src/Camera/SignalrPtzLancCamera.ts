@@ -1,16 +1,15 @@
 import * as signalR from '@microsoft/signalr';
 
 import { BehaviorSubject, Observable } from 'rxjs';
-import axios, { AxiosInstance } from 'axios';
+import { Agent } from 'undici';
 
-import { Agent as HttpsAgent } from 'https';
 import { ICameraConnection } from 'cgf.cameracontrol.main.core';
 import { ILogger } from 'cgf.cameracontrol.main.core';
 import { ISignalrPtzLancCameraConfiguration } from './ISignalrPtzLancCameraConfiguration';
 import { SignalrPtzLancCameraState } from './SignalrPtzLancCameraState';
 
 export class SignalrPtzLancCamera implements ICameraConnection {
-    private readonly _axios: AxiosInstance;
+    private readonly _fetchAgent: Agent;
     private readonly _socketConnection: signalR.HubConnection;
     private readonly _currentState = new SignalrPtzLancCameraState();
     private _shouldTransmitState = false;
@@ -21,10 +20,10 @@ export class SignalrPtzLancCamera implements ICameraConnection {
         private config: ISignalrPtzLancCameraConfiguration,
         private logger: ILogger
     ) {
-        this._axios = axios.create({
-            httpsAgent: new HttpsAgent({
+        this._fetchAgent = new Agent({
+            connect: {
                 rejectUnauthorized: false,
-            }),
+            },
         });
 
         this._socketConnection = new signalR.HubConnectionBuilder()
@@ -95,10 +94,16 @@ export class SignalrPtzLancCamera implements ICameraConnection {
 
     private async setupRemote() {
         try {
-            const response = await this._axios.get(this.config.connectionUrl + '/connections');
+            const getResponse = await fetch(this.config.connectionUrl + '/connections', {
+                dispatcher: this._fetchAgent,
+            } as RequestInit);
+            if (!getResponse.ok) {
+                throw new Error(`HTTP ${getResponse.status} GET ${this.config.connectionUrl}/connections`);
+            }
+            const data = (await getResponse.json()) as string[];
 
-            if (!response.data.includes(this.config.connectionPort)) {
-                this.logError(`Port:${this.config.connectionPort} is not available. Available Ports:${response.data}`);
+            if (!data.includes(this.config.connectionPort)) {
+                this.logError(`Port:${this.config.connectionPort} is not available. Available Ports:${data}`);
                 this.logError('Stopping camera.');
                 this.dispose();
             }
@@ -112,14 +117,21 @@ export class SignalrPtzLancCamera implements ICameraConnection {
             connected: true,
         };
         try {
-            await this._axios.put(`${this.config.connectionUrl}/connection`, connection);
+            const putResponse = await fetch(`${this.config.connectionUrl}/connection`, {
+                method: 'PUT',
+                body: JSON.stringify(connection),
+                headers: new Headers([['content-type', 'application/json']]),
+                dispatcher: this._fetchAgent,
+            } as RequestInit);
+            if (!putResponse.ok) {
+                throw new Error(`HTTP ${putResponse.status} PUT ${this.config.connectionUrl}/connection`);
+            }
         } catch (error) {
             this.logError(`Failed to connect to Port:${this.config.connectionPort} with error:${error}`);
             this.logError('Stopping camera.');
             this.dispose();
         }
     }
-
     private async connectionSuccessfullyEstablished() {
         this._canTransmit = true;
         this._connectionSubject.next(true);
