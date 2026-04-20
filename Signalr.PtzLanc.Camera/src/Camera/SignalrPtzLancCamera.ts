@@ -1,8 +1,7 @@
-import * as httpModule from 'node:http';
-import * as httpsModule from 'node:https';
 import * as signalR from '@microsoft/signalr';
 
 import { BehaviorSubject, Observable } from 'rxjs';
+import { Agent } from 'undici';
 
 import { ICameraConnection } from 'cgf.cameracontrol.main.core';
 import { ILogger } from 'cgf.cameracontrol.main.core';
@@ -10,6 +9,7 @@ import { ISignalrPtzLancCameraConfiguration } from './ISignalrPtzLancCameraConfi
 import { SignalrPtzLancCameraState } from './SignalrPtzLancCameraState';
 
 export class SignalrPtzLancCamera implements ICameraConnection {
+    private readonly _fetchAgent: Agent;
     private readonly _socketConnection: signalR.HubConnection;
     private readonly _currentState = new SignalrPtzLancCameraState();
     private _shouldTransmitState = false;
@@ -20,6 +20,12 @@ export class SignalrPtzLancCamera implements ICameraConnection {
         private config: ISignalrPtzLancCameraConfiguration,
         private logger: ILogger
     ) {
+        this._fetchAgent = new Agent({
+            connect: {
+                rejectUnauthorized: false,
+            },
+        });
+
         this._socketConnection = new signalR.HubConnectionBuilder()
             .withAutomaticReconnect()
             .withUrl(`${this.config.connectionUrl}/statehub`)
@@ -88,7 +94,13 @@ export class SignalrPtzLancCamera implements ICameraConnection {
 
     private async setupRemote() {
         try {
-            const data = await this.httpRequest<string[]>(this.config.connectionUrl + '/connections', 'GET');
+            const getResponse = await fetch(this.config.connectionUrl + '/connections', {
+                dispatcher: this._fetchAgent,
+            } as RequestInit);
+            if (!getResponse.ok) {
+                throw new Error(`HTTP ${getResponse.status} GET ${this.config.connectionUrl}/connections`);
+            }
+            const data = (await getResponse.json()) as string[];
 
             if (!data.includes(this.config.connectionPort)) {
                 this.logError(`Port:${this.config.connectionPort} is not available. Available Ports:${data}`);
@@ -105,55 +117,21 @@ export class SignalrPtzLancCamera implements ICameraConnection {
             connected: true,
         };
         try {
-            await this.httpRequest(`${this.config.connectionUrl}/connection`, 'PUT', connection);
+            const putResponse = await fetch(`${this.config.connectionUrl}/connection`, {
+                method: 'PUT',
+                body: JSON.stringify(connection),
+                headers: new Headers([['content-type', 'application/json']]),
+                dispatcher: this._fetchAgent,
+            } as RequestInit);
+            if (!putResponse.ok) {
+                throw new Error(`HTTP ${putResponse.status} PUT ${this.config.connectionUrl}/connection`);
+            }
         } catch (error) {
             this.logError(`Failed to connect to Port:${this.config.connectionPort} with error:${error}`);
             this.logError('Stopping camera.');
             this.dispose();
         }
     }
-
-    private httpRequest<T = void>(url: string, method: 'GET' | 'PUT', body?: unknown): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            const urlObj = new URL(url);
-            const isHttps = urlObj.protocol === 'https:';
-            const bodyStr = body !== undefined ? JSON.stringify(body) : undefined;
-            const headers: httpModule.OutgoingHttpHeaders = bodyStr
-                ? {
-                      ['Content-Length']: Buffer.byteLength(bodyStr),
-                      ['Content-Type']: 'application/json',
-                  }
-                : {};
-            const options: httpsModule.RequestOptions = {
-                hostname: urlObj.hostname,
-                port: urlObj.port || (isHttps ? 443 : 80),
-                path: urlObj.pathname + urlObj.search,
-                method,
-                rejectUnauthorized: false,
-                headers,
-            };
-            const lib = isHttps ? httpsModule : httpModule;
-            const req = lib.request(options, (res) => {
-                let rawData = '';
-                res.on('data', (chunk: Buffer) => {
-                    rawData += chunk.toString();
-                });
-                res.on('end', () => {
-                    if (res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300) {
-                        resolve(rawData ? (JSON.parse(rawData) as T) : (undefined as T));
-                    } else {
-                        reject(new Error(`HTTP ${res.statusCode} ${method} ${url}`));
-                    }
-                });
-            });
-            req.on('error', reject);
-            if (bodyStr) {
-                req.write(bodyStr);
-            }
-            req.end();
-        });
-    }
-
     private async connectionSuccessfullyEstablished() {
         this._canTransmit = true;
         this._connectionSubject.next(true);
