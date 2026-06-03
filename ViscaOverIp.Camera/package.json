@@ -67,7 +67,7 @@
     "semver": "^7.6.3",
     "shx": "^0.4.0",
     "simple-git": "^3.19.1",
-    "sort-package-json": "^3.0.0",
+    "sort-package-json": "^4.0.0",
     "typescript": "^6",
     "typescript-eslint": "^8"
   }
