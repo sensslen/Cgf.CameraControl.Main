@@ -341,3 +341,46 @@ Button directions: `"up"` (Y), `"down"` (A), `"left"` (X), `"right"` (B)
     "type": "connectionChange"
 }
 ```
+
+## Keyboard Interface
+
+A lightweight interface that reacts to the keyboard and supports only a subset of
+the gamepad functionality:
+
+-   **Arrow keys** pan/tilt the currently selected (preview) camera.
+-   **Number keys 1–9** select the mixer input (and therefore the camera) of the
+    same number.
+-   **Enter and Space** optionally perform a mixer `cut` or `auto` transition
+    (see `transitionKeys` below).
+
+It is added to the `interfaces` array just like a gamepad:
+
+```json
+{
+    "instance": 2,
+    "type": "keyboard",
+    "videoMixer": 1,
+    "cameraMap": {
+        "1": 1,
+        "2": 2,
+        "3": 3
+    },
+    "moveSpeed": 1,
+    "stopDelayMs": 250,
+    "transitionKeys": {
+        "enter": "cut",
+        "space": "auto"
+    }
+}
+```
+
+-   `instance`: Unique numeric identifier for the interface
+-   `type`: Must be `"keyboard"`
+-   `videoMixer`: Instance number of the video mixer this interface controls
+-   `cameraMap`: Maps mixer input numbers (the number key pressed) to camera instance numbers
+-   `moveSpeed`: (Optional, default: `1`) Pan/tilt speed in the range `]0 .. 1]` while an arrow key is held
+-   `stopDelayMs`: (Optional, default: `250`) Time in milliseconds after the last arrow key event before movement is stopped. Because the terminal only reports key presses (there is no key-release event), movement is kept alive by the operating system's key repeat. This value must be larger than the key repeat interval so that holding an arrow key results in continuous movement.
+-   `transitionKeys`: (Optional) Binds the **Enter** and **Space** keys to a mixer transition. Each of `enter`/`space` may be set to `"cut"` (immediate cut) or `"auto"` (transitioned cut), or omitted to leave that key unassigned.
+
+> **Note:** The keyboard interface reads from the terminal (standard input), so the
+> application must be started in an interactive terminal (a TTY). Press `Ctrl+C` to quit.

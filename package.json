@@ -17,9 +17,6 @@
     "type": "git",
     "url": "git+https://github.com/sensslen/Cgf.CameraControl.Main.git"
   },
-  "engines": {
-    "node": ">=22"
-  },
   "license": "MIT",
   "author": "Simon Ensslen",
   "main": "Cli/dist/index.js",
@@ -35,5 +32,8 @@
   },
   "dependencies": {
     "sort-package-json": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
