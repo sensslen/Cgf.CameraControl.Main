@@ -52,7 +52,7 @@
         "prettier": "^3.0.3",
         "shx": "^0.4.0",
         "sort-package-json": "^4.0.0",
-        "typescript": "^6",
+        "typescript": "^7.0.0",
         "typescript-eslint": "^8"
     },
     "engines": {
