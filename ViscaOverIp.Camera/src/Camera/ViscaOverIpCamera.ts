@@ -1,6 +1,6 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ICameraConnection, ILogger } from 'cgf.cameracontrol.main.core';
-import { ViscaCamera, ViscaCommand } from 'node-visca-over-ip';
+import { ViscaCamera, ViscaCommand } from 'visca-over-ip';
 import { IViscaOverIpCameraConfiguration } from './IViscaOverIpCameraConfiguration';
 
 // Define the available command categories for deduplication
