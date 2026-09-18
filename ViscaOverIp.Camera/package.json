@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "cgf.cameracontrol.main.core": "file:../Core/dist",
-    "node-visca-over-ip": "github:MorphixProductions/node-visca-over-ip",
+    "node-visca-over-ip": "https://github.com/MorphixProductions/node-visca-over-ip/archive/f4cef7c41cf091685bea58f7865aac166b332abc.tar.gz",
     "rxjs": "^7.8.1",
     "strict-event-emitter-types": "^2.0.0",
     "zod": "^4",
